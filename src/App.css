@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.calendar-view{
+    overflow:hidden
+}

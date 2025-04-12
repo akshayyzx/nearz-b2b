@@ -1,0 +1,93 @@
+/* Calendar Header */
+/* .rbc-header {
+    background: blue;
+    color: white;
+    padding: 4px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #e5e7eb;
+  } */
+  
+  /* Toolbar */
+  .rbc-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    font-size: 16px;
+    font-weight: 500;
+    background-color: #f1f5f9;
+    color: #1f2937;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .rbc-toolbar button {
+    background-color: blue;
+    color: white;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    margin: 0 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .rbc-toolbar button:hover {
+    background-color: #2563eb; /* Tailwind's blue-600 */
+  }
+  
+  /* Event */
+  /* .rbc-event {
+    padding: 2px 4px !important;
+    font-size: 14px;
+    background-color: #3b82f6 !important;
+    color: white;
+    border-radius: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+   */
+ /* Hide the label by default */
+.rbc-event-label {
+  opacity: 0; /* Ensure it is invisible */
+  visibility: hidden; /* Prevent it from occupying space */
+  transition: opacity 0.3s ease, visibility 0s 0.3s; /* Smooth transition for opacity */
+}
+
+/* Show the label on hover or when event is active */
+.rbc-event:hover .rbc-event-label,
+.rbc-event.active .rbc-event-label {
+  opacity: 1; /* Fade in */
+  visibility: visible; /* Make it visible */
+  transition: opacity 0.3s ease, visibility 0s 0s; /* Smooth transition back */
+}
+
+  
+  /* Time slots / rows */
+  .rbc-time-slot {
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  /* Agenda View */
+  .rbc-agenda-view table.rbc-agenda-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .rbc-agenda-view th,
+  .rbc-agenda-view td {
+    padding: 8px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  /* General calendar body styling */
+  .rbc-month-view,
+  .rbc-time-view,
+  .rbc-agenda-view {
+    background-color: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
