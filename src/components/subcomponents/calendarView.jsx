@@ -4,7 +4,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment'; 
 import 'react-big-calendar/lib/css/react-big-calendar.css'; 
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'; 
-import CustomToolbar from './customToolbar'; 
+import CustomToolbar from './CustomToolbar'; 
 import eventsData from '../../utils/eventData'; 
 import AppointmentPopup from './appointmentPopUp'; 
 import EventDetails from "./appointmentEventDetails"; 
@@ -32,9 +32,10 @@ const MyCalendar = () => {
   const calendarRef = useRef(null);
 
   useEffect(() => {
-    setShowPopup(false); // <- Ensure popup is hidden on mount
-    setShowEventDetails(false); // Optional, for safety
-  
+    // Reset UI state
+    setShowPopup(false);
+    setShowEventDetails(false);
+    
     if (!eventsData || !Array.isArray(eventsData)) {
       console.error("eventsData is not an array or is undefined");
       return;
@@ -42,22 +43,38 @@ const MyCalendar = () => {
   
     try {
       const formattedEvents = eventsData.map(event => {
+        // Safely access properties
+        if (!event.date || !event.start_time || !event.end_time) {
+          console.warn(`Event ${event.id} has missing date or time data`, event);
+          return null;
+        }
+        
         const start = moment(`${event.date} ${event.start_time}`, 'YYYY-MM-DD hh:mm a').toDate();
         const end = moment(`${event.date} ${event.end_time}`, 'YYYY-MM-DD hh:mm a').toDate();
+        
+        if (!moment(start).isValid() || !moment(end).isValid()) {
+          console.warn(`Event ${event.id} has invalid date format`, event);
+          return null;
+        }
   
         return {
           id: event.id,
-          title: `${event.user.username} - ${event.salon_services.map(service => service.service_name).join(', ')}`,
+          title: `${event.user?.username || 'Unknown'} - ${
+            Array.isArray(event.salon_services) 
+              ? event.salon_services.map(service => service.service_name).join(', ')
+              : 'No services'
+          }`,
           start,
           end,
           amount: event.amount,
-          status: event.status?.toLowerCase(),
-          user: event.user.username,
+          status: (event.status || '').toLowerCase(),
+          user: event.user?.username || 'Unknown',
           isDraggable: true,
           comment: event.comment,
           originalData: event
         };
-      });
+      }).filter(Boolean); // Remove null entries
+      
       setEventList(formattedEvents);
     } catch (error) {
       console.error("Error formatting events:", error);
@@ -65,7 +82,6 @@ const MyCalendar = () => {
     }
   }, []);
    
-
   const handleNavigate = useCallback((newDate) => { 
     setCurrentDate(newDate); 
   }, []); 
@@ -112,27 +128,56 @@ const MyCalendar = () => {
     setShowPopup(false); // Hide AppointmentPopup
   }, []); 
 
-
   const handleCalendarClick = useCallback((e) => {
-    if (!e.target.closest('.rbc-event')) {
-      if (e.clientX === 0 && e.clientY === 0) return; // <- Guard against 0,0 triggers
-  
-      setPopupPosition({ x: e.clientX, y: e.clientY });
-      setShowPopup(true);
-      setSelectedEvent(null);
-      setShowEventDetails(false);
-    } else {
-      setShowPopup(false);
+    // Ensure we're not clicking on an event
+    if (e.target.closest('.rbc-event')) {
+      return;
     }
+    
+    // Guard against synthetic events or events without coordinates
+    if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') {
+      return;
+    }
+    
+    // Guard against 0,0 triggers which might be browser artifacts
+    if (e.clientX === 0 && e.clientY === 0) {
+      return;
+    }
+  
+    setPopupPosition({ x: e.clientX, y: e.clientY });
+    setShowPopup(true);
+    setSelectedEvent(null);
+    setShowEventDetails(false);
   }, []);
   
+  const handleSelectSlot = useCallback((slotInfo) => {
+    if (slotInfo.action !== "select") return;
+    
+    // Access the original browser event
+    const e = slotInfo.box || window.event;
+    
+    // Guard against events without coordinates
+    if (!e || typeof e.clientX !== 'number' || typeof e.clientY !== 'number') return;
+    
+    // Guard against 0,0 triggers
+    if (e.clientX === 0 && e.clientY === 0) return;
+    
+    setPopupPosition({ x: e.clientX, y: e.clientY });
+    setShowPopup(true);
+    setSelectedEvent(null);
+    setShowEventDetails(false);
+  }, []);
 
   const handleStatusChange = useCallback((newStatus) => { 
     if (!selectedEvent) return;
 
     const updatedEvent = { 
       ...selectedEvent, 
-      status: newStatus 
+      status: newStatus,
+      originalData: {
+        ...selectedEvent.originalData,
+        status: newStatus
+      }
     };
 
     setEventList(prevEvents =>
@@ -144,24 +189,45 @@ const MyCalendar = () => {
     setSelectedEvent(updatedEvent); 
   }, [selectedEvent]);
 
-  const handleAddService = (service) => { 
+  const handleAddService = useCallback((service) => { 
     if (!selectedEvent) return;
 
-    const updatedEvent = { 
-      ...selectedEvent, 
-      salon_services: [...selectedEvent.salon_services, service] 
+    // Create a deep copy to avoid mutation issues
+    const updatedOriginalData = { 
+      ...selectedEvent.originalData,
+      salon_services: [
+        ...(Array.isArray(selectedEvent.originalData.salon_services) 
+          ? selectedEvent.originalData.salon_services 
+          : []),
+        service
+      ]
     };
+
+    // Update both the display title and the original data
+    const serviceNames = updatedOriginalData.salon_services
+      .map(s => s.service_name)
+      .join(', ');
+      
+    const updatedEvent = { 
+      ...selectedEvent,
+      title: `${selectedEvent.user} - ${serviceNames}`,
+      originalData: updatedOriginalData
+    };
+
     setEventList(prevEvents =>
       prevEvents.map(event =>
         event.id === selectedEvent.id ? updatedEvent : event
       )
     );
+    
     setSelectedEvent(updatedEvent); 
     setShowPopup(false); 
-  };
+  }, [selectedEvent]);
 
   const eventStyleGetter = useCallback((event) => { 
-    const backgroundColor = statusColorMap[event.status?.toLowerCase()] || '#e5e7eb'; 
+    const status = event.status || '';
+    const backgroundColor = statusColorMap[status] || '#e5e7eb'; 
+    
     return { 
       style: { 
         backgroundColor, 
@@ -183,7 +249,7 @@ const MyCalendar = () => {
     <div 
       ref={calendarRef} 
       style={{ height: '650px', margin: '20px', position: 'relative' }} 
-      onClick={handleCalendarClick} // Handle clicks outside events
+      onClick={handleCalendarClick}
     > 
       <div className="flex gap-4 mb-4"> 
         {Object.entries(statusColorMap).map(([status, color]) => ( 
@@ -193,35 +259,26 @@ const MyCalendar = () => {
           </div> 
         ))} 
       </div> 
+      
       <DnDCalendar 
-  localizer={localizer} 
-  events={eventList} 
-  startAccessor="start" 
-  endAccessor="end" 
-  date={currentDate} 
-  view={currentView} 
-  onNavigate={handleNavigate} 
-  onView={handleViewChange} 
-  onEventDrop={handleEventDrop} 
-  onEventResize={handleEventResize} 
-  components={{ toolbar: CustomToolbar }} 
-  draggableAccessor={(event) => !!event.isDraggable} 
-  resizable 
-  selectable
-  onSelectSlot={(slotInfo) => {
-    if (slotInfo.action === "select") {
-      const { clientX, clientY } = window.event || {};
-      if (clientX === 0 && clientY === 0) return;
-      setPopupPosition({ x: clientX, y: clientY });
-      setShowPopup(true);
-      setSelectedEvent(null);
-      setShowEventDetails(false);
-    }
-  }}
-  onSelectEvent={handleEventClick} 
-  eventPropGetter={eventStyleGetter} 
-/>
-
+        localizer={localizer} 
+        events={eventList} 
+        startAccessor="start" 
+        endAccessor="end" 
+        date={currentDate} 
+        view={currentView} 
+        onNavigate={handleNavigate} 
+        onView={handleViewChange} 
+        onEventDrop={handleEventDrop} 
+        onEventResize={handleEventResize} 
+        components={{ toolbar: CustomToolbar }} 
+        draggableAccessor={(event) => !!event.isDraggable} 
+        resizable 
+        selectable
+        onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleEventClick} 
+        eventPropGetter={eventStyleGetter} 
+      />
 
       {showEventDetails && selectedEvent && ( 
         <EventDetails 
@@ -236,7 +293,6 @@ const MyCalendar = () => {
         <AppointmentPopup 
           position={popupPosition} 
           onClose={handleClosePopup} 
-          event={selectedEvent} 
           onAddService={handleAddService} 
         /> 
       )}

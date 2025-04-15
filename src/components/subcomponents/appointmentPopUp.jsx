@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import ServiceSidebar from '../subcomponents/sideServiceSlider'; // Make sure this import path is correct
+import ServiceSidebar from './SideServiceSlider'; 
 
 const AppointmentPopup = ({ position, onClose, timeSlot, onSelectService }) => {
   const [showServiceSidebar, setShowServiceSidebar] = useState(false);
