@@ -5,8 +5,8 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import Sidebar from '../subcomponents/SideServiceSlider'; 
-import FetchSalonService from '../subcomponents/FetchSalonServices'
+import Sidebar from './SideServiceSlider'; 
+import FetchSalonService from './FetchSalonServices'
 
 const localizer = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(Calendar);
@@ -93,6 +93,7 @@ const MyCalendar = () => {
   };
 
   return (
+    <>
     <div className="flex h-screen">
       <div className={`flex-grow transition-all duration-300 ${sidebarOpen ? 'pr-64' : ''}`}>
         <div style={{ height: '650px', margin: '20px' }}>
@@ -125,8 +126,9 @@ const MyCalendar = () => {
         updateEvent={updateEvent}
         deleteEvent={deleteEvent}
       />
-      <FetchSalonService/>
     </div>
+      {/* <FetchSalonService/> */}
+      </>
   );
 };
 

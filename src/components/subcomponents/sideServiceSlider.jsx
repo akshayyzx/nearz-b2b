@@ -1,6 +1,7 @@
 // Sidebar.jsx
 import React, { useState } from 'react';
 import moment from 'moment';
+import FetchSalonService from './FetchSalonServices'
 
 const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteEvent }) => {
   return (
@@ -47,6 +48,7 @@ const SidebarForm = ({ selectedSlot, addEvent }) => {
   };
   
   return (
+    <>
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -79,7 +81,7 @@ const SidebarForm = ({ selectedSlot, addEvent }) => {
           {moment(selectedSlot.end || new Date(selectedSlot.start.getTime() + 60 * 60 * 1000)).format('MMMM D, YYYY h:mm a')}
         </p>
       </div>
-      
+     
       <button 
         type="submit" 
         className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded"
@@ -87,6 +89,8 @@ const SidebarForm = ({ selectedSlot, addEvent }) => {
         Add Event
       </button>
     </form>
+     <FetchSalonService/>
+     </>
   );
 };
 
@@ -132,7 +136,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
           </div>
         </div>
       ) : (
-        <>
+        <div>
           <p className="font-medium text-gray-700">Title: {event.title}</p>
           <p className="text-sm text-gray-600">
             Start: {moment(event.start).format('MMMM D, YYYY h:mm a')}
@@ -154,7 +158,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
               Delete
             </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
