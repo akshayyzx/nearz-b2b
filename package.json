@@ -14,6 +14,7 @@
     "axios": "^1.8.4",
     "chart.js": "^4.4.8",
     "chartjs-2": "^0.0.1-security",
+    "firebase": "^11.6.0",
     "lucide-react": "^0.487.0",
     "moment": "^2.30.1",
     "react": "^18.3.1",
