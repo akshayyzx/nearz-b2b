@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/subcomponents/Drawer.jsx';
 import CalendarView from '../components/subcomponents/CalendarView.jsx';
-import Insights from '../components/subcomponents/insights';
-import UserSegmentation from '../components/subcomponents/userSegmentation';
+import Insights from '../components/subcomponents/Insights';
+import UserSegmentation from '../components/subcomponents/UserSegmentation';
 import Header from './Header.jsx';
 
 const Dashboard = () => {
