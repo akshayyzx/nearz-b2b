@@ -1,12 +1,19 @@
 // Sidebar.jsx
 import React, { useState } from 'react';
 import moment from 'moment';
-import FetchSalonService from './FetchSalonServices'
+import FetchSalonService from './FetchSalonServices';
 
 const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteEvent }) => {
+  const [activeTab, setActiveTab] = useState('manual'); // 'manual' or 'service'
+  
+  // Enhanced addEvent handler to pass to FetchSalonService
+  const handleAddServiceEvent = (title, start, end, metadata) => {
+    addEvent(title, start, end, metadata);
+  };
+  
   return (
-    <div className={`fixed right-0 top-0 h-full w-64 bg-white shadow-lg p-4 transition-all z-10 border-l border-gray-200 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-      <div className="flex justify-between items-center mb-4">
+    <div className={`fixed right-0 top-0 h-full w-80 bg-white shadow-lg transition-all z-10 border-l border-gray-200 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'} overflow-y-auto`}>
+      <div className="flex justify-between items-center p-4 border-b border-gray-200">
         <h2 className="text-lg font-semibold">
           {selectedSlot?.isEvent ? 'Edit Event' : 'Add Event'}
         </h2>
@@ -19,7 +26,7 @@ const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteE
       </div>
 
       {selectedSlot && (
-        <div className="space-y-4">
+        <div className="p-4">
           {selectedSlot.isEvent ? (
             <EventDetails 
               event={selectedSlot} 
@@ -27,10 +34,36 @@ const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteE
               deleteEvent={deleteEvent} 
             />
           ) : (
-            <SidebarForm 
-              selectedSlot={selectedSlot} 
-              addEvent={addEvent} 
-            />
+            <>
+              {/* Tabs for switching between manual event and service appointment */}
+              <div className="flex border-b border-gray-200 mb-4">
+                <button
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'manual' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('manual')}
+                >
+                  Manual Event
+                </button>
+                <button
+                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'service' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                  onClick={() => setActiveTab('service')}
+                >
+                  Salon Service
+                </button>
+              </div>
+              
+              {activeTab === 'manual' ? (
+                <SidebarForm 
+                  selectedSlot={selectedSlot} 
+                  addEvent={addEvent} 
+                  onClose={onClose}
+                />
+              ) : (
+                <FetchSalonService 
+                  addEvent={handleAddServiceEvent} 
+                  selectedSlot={selectedSlot} 
+                />
+              )}
+            </>
           )}
         </div>
       )}
@@ -38,17 +71,19 @@ const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteE
   );
 };
 
-const SidebarForm = ({ selectedSlot, addEvent }) => {
+const SidebarForm = ({ selectedSlot, addEvent, onClose }) => {
   const [title, setTitle] = useState('');
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    addEvent(title);
+    const start = selectedSlot.start;
+    const end = selectedSlot.end || new Date(start.getTime() + 60 * 60 * 1000); // Default to 1 hour
+    addEvent(title, start, end);
     setTitle(''); // Reset form after submission
+    onClose(); // Close sidebar after adding event
   };
   
   return (
-    <>
     <form onSubmit={handleSubmit}>
       <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -89,8 +124,6 @@ const SidebarForm = ({ selectedSlot, addEvent }) => {
         Add Event
       </button>
     </form>
-     <FetchSalonService/>
-     </>
   );
 };
 
@@ -106,6 +139,9 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
   const handleDelete = () => {
     deleteEvent(event.id);
   };
+  
+  // Check if this is a service appointment
+  const isServiceAppointment = event.metadata && event.metadata.serviceId;
   
   return (
     <div>
@@ -137,13 +173,39 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
         </div>
       ) : (
         <div>
-          <p className="font-medium text-gray-700">Title: {event.title}</p>
+          <p className="font-medium text-gray-700">{event.title}</p>
           <p className="text-sm text-gray-600">
-            Start: {moment(event.start).format('MMMM D, YYYY h:mm a')}
+            {moment(event.start).format('MMMM D, YYYY h:mm a')} - {moment(event.end).format('h:mm a')}
           </p>
-          <p className="text-sm text-gray-600">
-            End: {moment(event.end).format('MMMM D, YYYY h:mm a')}
-          </p>
+          
+          {/* Display service-specific information if available */}
+          {isServiceAppointment && (
+            <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
+              <h3 className="font-medium text-blue-800 mb-2">Appointment Details</h3>
+              
+              <div className="space-y-1">
+                <p className="text-sm">
+                  <span className="font-medium">Customer:</span> {event.metadata.customerName}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Service:</span> {event.metadata.serviceName}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Category:</span> {event.metadata.category}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Price:</span> ₹{event.metadata.price}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Duration:</span> {event.metadata.duration} min
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Gender:</span> {event.metadata.gender}
+                </p>
+              </div>
+            </div>
+          )}
+          
           <div className="mt-4">
             <button 
               onClick={() => setIsEditing(true)}

@@ -18,7 +18,7 @@ function App() {
 
     if (savedPage) setCurrentPage(savedPage);
     if (savedPhone) setPhoneNumber(savedPhone);
-    // localStorage.clear();
+    localStorage.clear();
   }, []);
 
   const handleSignupSuccess = (phone) => {
