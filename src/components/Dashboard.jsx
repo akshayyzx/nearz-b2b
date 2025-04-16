@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/subcomponents/Drawer.jsx';
-import CalendarView from './subcomponents/CalendarView.jsx';
+import CalendarView from './subcomponents/calendarView.jsx';
 import Insights from '../components/subcomponents/insights';
 import UserSegmentation from '../components/subcomponents/userSegmentation';
 import Header from './Header.jsx';
