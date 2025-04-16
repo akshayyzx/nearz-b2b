@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import Sidebar from '../components/subcomponents/Drawer.jsx';
-import CalendarView from '../components/subcomponents/calendarView';
+import CalendarView from '../components/subcomponents/CalendarView';
 import Insights from '../components/subcomponents/insights';
 import UserSegmentation from '../components/subcomponents/userSegmentation';
+import Header from './Header.jsx';
 
 const Dashboard = () => {
-  const [activeView, setActiveView] = useState('calendar'); // default to calendar
+  const [activeView, setActiveView] = useState('calendar');
 
   const handleViewSelect = (view) => {
     setActiveView(view);
@@ -14,7 +15,7 @@ const Dashboard = () => {
   const renderPage = () => {
     switch (activeView) {
       case 'calendar':
-        return <CalendarView className="calender-view"/>;
+        return <CalendarView />;
       case 'reports':
         return <Insights />;
       case 'client':
@@ -25,12 +26,24 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="flex">
-      <Sidebar onSelectView={handleViewSelect} activeView={activeView} />
-      <div className="flex-1 pl-5 ml-10">
-        {renderPage()}
+    <>
+    <div className="min-h-screen flex flex-col">
+      {/* Fixed Header at Top */}
+      <div className="">
+        <Header />
+      </div>
+
+      {/* Sidebar + Content */}
+      <div className="flex flex-1">
+        <Sidebar onSelectView={handleViewSelect} activeView={activeView} />
+
+        {/* Main content */}
+        <div >
+          {renderPage()}
+        </div>
       </div>
     </div>
+    </>
   );
 };
 
