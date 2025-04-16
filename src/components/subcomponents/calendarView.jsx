@@ -93,6 +93,7 @@ const MyCalendar = () => {
   };
 
   return (
+    <>
     <div className="flex h-screen">
       <div className={`flex-grow transition-all duration-300 ${sidebarOpen ? 'pr-64' : ''}`}>
         <div style={{ height: '650px', margin: '20px' }}>
@@ -125,8 +126,9 @@ const MyCalendar = () => {
         updateEvent={updateEvent}
         deleteEvent={deleteEvent}
       />
-      <FetchSalonService/>
     </div>
+      {/* <FetchSalonService/> */}
+      </>
   );
 };
 
