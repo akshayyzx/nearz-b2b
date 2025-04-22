@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import Sidebar from '../components/subcomponents/Drawer.jsx';
+import Sidebar from './Drawer.jsx';
 import CalendarView from './subcomponents/calendarView.jsx';
 import Insights from '../components/subcomponents/insights';
 import UserSegmentation from '../components/subcomponents/userSegmentation';
-import Header from './Header.jsx';
+import AppointmentsList from './subcomponents/Appointments.jsx';
+
 
 const Dashboard = () => {
   const [activeView, setActiveView] = useState('calendar');
@@ -14,6 +15,8 @@ const Dashboard = () => {
 
   const renderPage = () => {
     switch (activeView) {
+      case 'home':
+        return <AppointmentsList/>;
       case 'calendar':
         return <CalendarView />;
       case 'reports':
@@ -28,10 +31,7 @@ const Dashboard = () => {
   return (
     <>
     <div className="min-h-screen flex flex-col">
-      {/* Fixed Header at Top */}
-      <div className="">
-        <Header />
-      </div>
+     
 
       {/* Sidebar + Content */}
       <div className="flex flex-1">

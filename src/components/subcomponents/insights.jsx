@@ -261,7 +261,10 @@ const SalonDashboard = () => {
   const currentViewData = chartData[viewType];
   
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
+    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' ,width:'90vw',marginLeft:'3vw'}}>
+      <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginLeft:'35vw' }}>
+    User Insights
+  </h1>
       <div style={{ marginBottom: '20px' }}>
         <label htmlFor="viewType" style={{ marginRight: '10px', fontWeight: 'bold', fontSize: '16px' }}>
           View Type:
