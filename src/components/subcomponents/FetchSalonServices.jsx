@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
-import "react-big-calendar/lib/css/react-big-calendar.css";
 import salonApiService from "./FetchAppointmentSlots";
 
 const SalonBookingApp = () => {
@@ -18,6 +17,9 @@ const SalonBookingApp = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [userName, setUserName] = useState("");
+const [phoneNumber, setPhoneNumber] = useState("");
+
 
   // Initial data fetch - salon ID and services
   useEffect(() => {
@@ -46,17 +48,16 @@ const SalonBookingApp = () => {
 
   // Fetch time slots whenever date changes
   useEffect(() => {
+    if (!salonId) return;
+    
     const loadTimeSlots = async () => {
-      if (!salonId) return;
-      
       setLoadingSlots(true);
-      
       try {
         const slots = await salonApiService.fetchTimeSlots(salonId, selectedDate);
         setTimeSlots(slots);
-        setLoadingSlots(false);
       } catch (err) {
         setError(err.message);
+      } finally {
         setLoadingSlots(false);
       }
     };
@@ -66,9 +67,8 @@ const SalonBookingApp = () => {
 
   // Calculate total duration when pending appointments change
   useEffect(() => {
-    const duration = pendingAppointments.reduce((total, appointment) => {
-      return total + appointment.metadata.duration;
-    }, 0);
+    const duration = pendingAppointments.reduce((total, appointment) => 
+      total + appointment.metadata.duration, 0);
     setTotalDuration(duration);
   }, [pendingAppointments]);
 
@@ -80,17 +80,13 @@ const SalonBookingApp = () => {
   };
 
   // Get services filtered by category
-  const getServicesByCategory = (services, category) => {
-    return services.filter(service => service.category === category);
+  const getServicesByCategory = (category) => {
+    return salonServices.filter(service => service.category === category);
   };
 
   // Toggle category expansion in services accordion
   const toggleCategory = (category) => {
-    if (expandedCategory === category) {
-      setExpandedCategory(null);
-    } else {
-      setExpandedCategory(category);
-    }
+    setExpandedCategory(expandedCategory === category ? null : category);
   };
 
   // Handle date selection from calendar
@@ -106,35 +102,33 @@ const SalonBookingApp = () => {
     setSelectedSlot({
       start: slotDateTime,
       formattedTime: slot.from,
-      slotId: slot.id // Store the slot ID for the API call
+      slotId: slot.id
     });
-    setPendingAppointments([]); // Reset pending appointments when time slot changes
+    setPendingAppointments([]);
   };
 
   // Add service to pending appointments
   const handleAddService = (service) => {
-    if (!selectedSlot || !selectedSlot.start) {
+    if (!selectedSlot) {
       alert("Please select a time slot first");
       return;
     }
     
-    // Calculate the end time based on the service duration
-    const startTime = new Date(selectedSlot.start);
-    let endTime;
+    // Calculate start and end times
+    let startTime;
+    const lastIndex = pendingAppointments.length - 1;
     
-    // If there are existing appointments, schedule this one after the last one
-    if (pendingAppointments.length > 0) {
-      const lastAppointment = pendingAppointments[pendingAppointments.length - 1];
-      const newStartTime = new Date(lastAppointment.end);
-      endTime = new Date(newStartTime.getTime() + service.duration_in_minutes * 60 * 1000);
-      startTime.setTime(newStartTime.getTime());
+    if (lastIndex >= 0) {
+      startTime = new Date(pendingAppointments[lastIndex].end);
     } else {
-      endTime = new Date(startTime.getTime() + service.duration_in_minutes * 60 * 1000);
+      startTime = new Date(selectedSlot.start);
     }
     
+    const endTime = new Date(startTime.getTime() + service.duration_in_minutes * 60 * 1000);
+    
     const newAppointment = {
-      id: Date.now(), // Temporary ID
-      title: `${service.name}`,
+      id: Date.now(),
+      title: service.name,
       start: startTime,
       end: endTime,
       metadata: {
@@ -152,21 +146,18 @@ const SalonBookingApp = () => {
 
   // Remove appointment from pending list
   const handleRemovePending = (id) => {
-    // Find the index of the appointment to remove
     const index = pendingAppointments.findIndex(appt => appt.id === id);
     if (index === -1) return;
     
-    // Remove the appointment
     const newAppointments = [...pendingAppointments];
     newAppointments.splice(index, 1);
     
-    // If we removed anything but the last appointment, we need to recalculate times
+    // Recalculate times for subsequent appointments if needed
     if (index < newAppointments.length) {
       let currentStart = index === 0 
         ? new Date(selectedSlot.start) 
         : new Date(newAppointments[index-1].end);
       
-      // Update start/end times for all subsequent appointments
       for (let i = index; i < newAppointments.length; i++) {
         newAppointments[i].start = new Date(currentStart);
         newAppointments[i].end = new Date(
@@ -181,32 +172,43 @@ const SalonBookingApp = () => {
 
   // Confirm all appointments
   const handleConfirmAllAppointments = async () => {
+    if (!userName || phoneNumber.length !== 10) {
+      alert("Please enter a valid name and 10-digit phone number.");
+      return;
+    }
+  
+    const formattedPhone = phoneNumber.startsWith("+91")
+      ? phoneNumber
+      : `+91${phoneNumber}`;
+  
+      const userData = {
+        username: userName.trim(),
+        mobile: "+91" + phoneNumber,
+      };
+  
     try {
       await salonApiService.makeAppointment(
         salonId,
         selectedSlot.start,
         totalDuration,
         selectedSlot,
-        pendingAppointments
+        pendingAppointments,
+        userData
       );
-      
-      // Reset the pending appointments
       setPendingAppointments([]);
       alert("Appointments booked successfully!");
     } catch (error) {
       alert(error.message);
     }
   };
+  
 
   // Generate calendar date cells for date picker
   const generateCalendarDays = () => {
     const today = moment();
     const startOfMonth = moment(selectedDate).startOf('month');
     const endOfMonth = moment(selectedDate).endOf('month');
-    
-    // Get the start of the first week (might be in previous month)
     const startDay = moment(startOfMonth).startOf('week');
-    // Get the end of the last week (might be in next month)
     const endDay = moment(endOfMonth).endOf('week');
     
     const days = [];
@@ -228,8 +230,7 @@ const SalonBookingApp = () => {
 
   // Navigate to previous/next month
   const navigateMonth = (direction) => {
-    const newDate = moment(selectedDate).add(direction, 'month').format("YYYY-MM-DD");
-    setSelectedDate(newDate);
+    setSelectedDate(moment(selectedDate).add(direction, 'month').format("YYYY-MM-DD"));
   };
 
   if (loading) {
@@ -257,15 +258,47 @@ const SalonBookingApp = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="bg-gray-100 min-h-screen">
       <div className="container mx-auto py-6 px-4">
         <h1 className="text-2xl font-bold mb-6">Salon Appointment Booking</h1>
+        <div className="bg-white p-4 rounded shadow mb-4">
+  <h2 className="text-lg font-semibold mb-2">Your Details</h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <input
+      type="text"
+      placeholder="Your Name"
+      value={userName}
+      onChange={(e) => setUserName(e.target.value)}
+      className="px-3 py-2 border rounded w-full"
+    />
+    <input
+      type="tel"
+      placeholder="10-digit Phone"
+      value={phoneNumber}
+      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
+      maxLength={10}
+      className="px-3 py-2 border rounded w-full"
+    />
+  </div>
+</div>
+
+      
+        {/* Selected Information Summary */}
+        {selectedSlot && (
+          <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <h2 className="text-lg font-medium mb-4">Selected Date & Time</h2>
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
+              <p className="font-medium">{moment(selectedDate).format("MMMM D, YYYY")}</p>
+              <p className="text-sm mt-1">Time: {selectedSlot.formattedTime}</p>
+            </div>
+          </div>
+        )}
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column: Calendar and Time Slots */}
-          <div className="lg:col-span-1">
+          <div>
             <div className="bg-white rounded-lg shadow p-4 mb-6">
               <h2 className="text-lg font-medium mb-4">Select Date</h2>
               
@@ -347,21 +380,10 @@ const SalonBookingApp = () => {
                 </div>
               )}
             </div>
-            
-            {/* Selected Information Summary */}
-            {selectedSlot && (
-              <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <h2 className="text-lg font-medium mb-4">Selected Date & Time</h2>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                  <p className="font-medium">{moment(selectedDate).format("MMMM D, YYYY")}</p>
-                  <p className="text-sm mt-1">Time: {selectedSlot.formattedTime}</p>
-                </div>
-              </div>
-            )}
           </div>
           
           {/* Right Column: Services Selection */}
-          <div className="lg:col-span-1">
+          <div>
             <div className="bg-white rounded-lg shadow p-4">
               <h2 className="text-lg font-medium mb-4">Select Services</h2>
               
@@ -408,7 +430,7 @@ const SalonBookingApp = () => {
               
               {/* Services Accordion */}
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                {salonServices && salonServices.length > 0 ? (
+                {salonServices.length > 0 ? (
                   <div>
                     {getServiceCategories(salonServices).map((category) => (
                       <div key={category} className="border-b last:border-b-0">
@@ -424,7 +446,6 @@ const SalonBookingApp = () => {
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
                               strokeLinecap="round"
@@ -438,7 +459,7 @@ const SalonBookingApp = () => {
                         {expandedCategory === category && (
                           <div className="px-2 pb-2">
                             <ul className="divide-y divide-gray-100">
-                              {getServicesByCategory(salonServices, category).map((service) => (
+                              {getServicesByCategory(category).map((service) => (
                                 <li key={service.id} className="py-2">
                                   <div className="flex justify-between items-center">
                                     <div>

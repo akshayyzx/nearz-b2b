@@ -44,6 +44,7 @@ function App() {
     if (savedAuth) setIsAuthenticated(true);
 
     setIsLoading(false);
+    // localStorage.clear();
   }, []);
 
   const handleSignupSuccess = (phone) => {
@@ -81,53 +82,45 @@ function App() {
           />
         </div>
 
-        <div className="flex-1 mt-16 flex items-center justify-center overflow-auto">
-          <Routes>
-            {/* Root path loads SignUp */}
-            <Route
-              path="/"
-              element={
-                isAuthenticated
-                  ? <Navigate to="/dashboard" />
-                  : <Navigate to="/signup" />
-              }
-            />
+        <div className={`flex-1 ${!isAuthenticated ? 'mt-0' : 'mt-16'} flex items-center justify-center overflow:hidden`}>
+    <Routes>
+      {/* Root path loads SignUp */}
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <Navigate to="/signup" />
+        }
+      />
 
-            {/* Signup */}
-            <Route
-              path="/signup"
-              element={
-                isAuthenticated
-                  ? <Navigate to="/dashboard" />
-                  : <SignUpWrapper onSignupSuccess={handleSignupSuccess} />
-              }
-            />
+      {/* Signup */}
+      <Route
+        path="/signup"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <SignUpWrapper onSignupSuccess={handleSignupSuccess} />
+        }
+      />
 
-            {/* Login */}
-            <Route
-              path="/login"
-              element={
-                isAuthenticated
-                  ? <Navigate to="/dashboard" />
-                  : <LoginForm initialPhone={phoneNumber} onLoginSuccess={handleLoginSuccess} />
-              }
-            />
+      {/* Login */}
+      <Route
+        path="/login"
+        element={
+          isAuthenticated ? <Navigate to="/dashboard" /> : <LoginForm initialPhone={phoneNumber} onLoginSuccess={handleLoginSuccess} />
+        }
+      />
 
-            {/* Dashboard (auth protected) */}
-            <Route
-              path="/dashboard"
-              element={
-                isAuthenticated
-                  ? <Dashboard />
-                  : <Navigate to="/login" />
-              }
-            />
+      {/* Dashboard (auth protected) */}
+      <Route
+        path="/dashboard"
+        element={
+          isAuthenticated ? <Dashboard /> : <Navigate to="/login" />
+        }
+      />
 
-            {/* ViewBill (open to all) */}
-            <Route path="/bill/:ulid" element={<ViewBill />} />
-          </Routes>
-        </div>
-      </div>
+      {/* ViewBill (open to all) */}
+      <Route path="/bill/:ulid" element={<ViewBill />} />
+    </Routes>
+  </div>
+</div>
     </Router>
   );
 }

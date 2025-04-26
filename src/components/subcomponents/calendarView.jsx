@@ -30,7 +30,6 @@ const MyCalendar = () => {
     return new Date(year, month - 1, day, hours, minutes);
   };
 
-  // 🆕 Make loadEvents reusable
   const loadEvents = useCallback(async () => {
     try {
       setIsLoadingEvents(true);
@@ -48,12 +47,12 @@ const MyCalendar = () => {
 
         return {
           id: app.id || idx,
-          title: serviceNames || 'Unnamed Appointment',
+          title: `${app.start_time.split(' ')[0]} ${serviceNames || 'Walk-In'}`,
           start: startDateTime,
           end: endDateTime,
           isDraggable: true,
           metadata: app,
-          status: app.status
+          status: app.status || 'confirmed'
         };
       });
 
@@ -70,8 +69,13 @@ const MyCalendar = () => {
     loadEvents();
   }, [loadEvents]);
 
-  const handleNavigate = useCallback((newDate) => setCurrentDate(newDate), []);
-  const handleViewChange = useCallback((newView) => setCurrentView(newView), []);
+  const handleNavigate = useCallback((newDate) => {
+    setCurrentDate(newDate);
+  }, []);
+
+  const handleViewChange = useCallback((newView) => {
+    setCurrentView(newView);
+  }, []);
 
   const handleEventDrop = useCallback(({ event, start, end }) => {
     setEventList(prev =>
@@ -97,11 +101,10 @@ const MyCalendar = () => {
 
   const closeSidebar = () => setSidebarOpen(false);
 
-  // ✅ Updated to refetch appointments after adding one
   const addEvent = async (title, start, end, metadata) => {
     if (selectedSlot && title) {
       setSidebarOpen(false);
-      await loadEvents(); // ← Refresh events after add
+      await loadEvents(); // Refresh events after add
     }
   };
 
@@ -115,30 +118,137 @@ const MyCalendar = () => {
   };
 
   const eventPropGetter = useCallback((event) => {
-    let className = '';
-    if (event.status === 'Confirmed') className = 'status-confirmed';
-    else if (event.status === 'Pending') className = 'status-pending';
-    else if (event.status === 'Cancelled') className = 'status-cancelled';
+    let className = 'fresha-event';
+    // Add status-specific classes for coloring
+    if (event.status === 'confirmed' || event.status === 'Confirmed') 
+      className += ' status-confirmed';
+    else if (event.status === 'pending' || event.status === 'Pending') 
+      className += ' status-pending';
+    else if (event.status === 'cancelled' || event.status === 'Cancelled') 
+      className += ' status-cancelled';
     return { className };
   }, []);
 
-  const dayPropGetter = (date) => {
+  const dayPropGetter = useCallback((date) => {
     const today = new Date();
     if (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     ) {
-      return {
-        className: 'today-highlight',
-        style: {
-          backgroundColor: '#e6f7ff',
-          borderBottom: '2px solid #1890ff',
-          fontWeight: 'bold'
-        }
-      };
+      return { className: 'today-highlight' };
     }
     return {};
+  }, []);
+
+  // This function will properly format the label for our toolbar
+  const getFormattedLabel = () => {
+    const date = currentDate;
+    const formatted = moment(date).format('MMMM YYYY');
+    return formatted;
+  };
+
+  // Custom toolbar with functional buttons
+  const CustomToolbar = (toolbarProps) => {
+    const goToToday = () => {
+      const now = new Date();
+      handleNavigate(now);
+    };
+
+    const goToPrev = () => {
+      const newDate = moment(currentDate).subtract(1, currentView).toDate();
+      handleNavigate(newDate);
+    };
+
+    const goToNext = () => {
+      const newDate = moment(currentDate).add(1, currentView).toDate();
+      handleNavigate(newDate);
+    };
+
+    const onViewChange = (newView) => {
+      handleViewChange(newView.toLowerCase());
+    };
+
+    return (
+      <div className="fresha-toolbar">
+        <div className="fresha-toolbar-left">
+          <button 
+            className="today-btn" 
+            onClick={goToToday}
+          >
+            Today
+          </button>
+          <div className="nav-buttons">
+            <button onClick={goToPrev}>
+              <span>‹</span>
+            </button>
+            <span className="toolbar-label">{getFormattedLabel()}</span>
+            <button onClick={goToNext}>
+              <span>›</span>
+            </button>
+          </div>
+        </div>
+        <div className="fresha-toolbar-center">
+          <div className="team-selector">
+            <span>Scheduled team</span>
+            <span className="arrow-down">▼</span>
+          </div>
+          <button className="filter-btn">
+            <span>≡</span>
+          </button>
+        </div>
+        <div className="fresha-toolbar-right">
+          <button 
+            className="settings-btn"
+            title="Settings"
+          >
+            <span>⚙️</span>
+          </button>
+          <button 
+            className="calendar-btn"
+            title="Calendar"
+          >
+            <span>📅</span>
+          </button>
+          <button 
+            className="refresh-btn"
+            onClick={loadEvents}
+            title="Refresh"
+          >
+            <span>↻</span>
+          </button>
+          <div className="view-selector">
+            <select 
+              value={currentView}
+              onChange={(e) => handleViewChange(e.target.value)}
+              className="view-select"
+            >
+              <option value="month">Month</option>
+              <option value="week">Week</option>
+              <option value="day">Day</option>
+              {/* <option value="agenda">Agenda</option> */}
+            </select>
+          </div>
+          <button 
+            className="add-btn"
+            onClick={() => {
+              // Create a new slot for today
+              const now = new Date();
+              const end = new Date(now);
+              end.setHours(end.getHours() + 1);
+              
+              setSelectedSlot({
+                start: now,
+                end: end
+              });
+              setSidebarOpen(true);
+            }}
+          >
+            Add <span className="arrow-down">▼</span>
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (isLoadingEvents) {
@@ -150,32 +260,30 @@ const MyCalendar = () => {
   }
 
   return (
-    <div className="relative h-screen w-full ml-15">
-      <div className="h-full w-full ">
-        <div className="h-[85vh] w-[90vw]  mt-5">
-          <DnDCalendar
-            localizer={localizer}
-            events={eventList}
-            startAccessor="start"
-            endAccessor="end"
-            date={currentDate}
-            view={currentView}
-            onNavigate={handleNavigate}
-            onView={handleViewChange}
-            onEventDrop={handleEventDrop}
-            onEventResize={handleEventResize}
-            selectable
-            onSelectSlot={handleSelectSlot}
-            onSelectEvent={handleSelectEvent}
-            draggableAccessor={event => !!event.isDraggable}
-            resizable
-            dayPropGetter={dayPropGetter}
-            eventPropGetter={eventPropGetter}
-            defaultDate={new Date()}
-            style={{ height: '100%', width: '100%' }}
-          />
-        </div>
-      </div>
+    <div className="fresha-calendar-container rounded-xl mt-2">
+      <DnDCalendar
+        localizer={localizer}
+        events={eventList}
+        startAccessor="start"
+        endAccessor="end"
+        date={currentDate}
+        view={currentView}
+        onNavigate={handleNavigate}
+        onView={handleViewChange}
+        onEventDrop={handleEventDrop}
+        onEventResize={handleEventResize}
+        selectable
+        onSelectSlot={handleSelectSlot}
+        onSelectEvent={handleSelectEvent}
+        draggableAccessor={event => !!event.isDraggable}
+        resizable
+        dayPropGetter={dayPropGetter}
+        eventPropGetter={eventPropGetter}
+        components={{
+          toolbar: CustomToolbar
+        }}
+        views={['month', 'week', 'day']}
+      />
 
       <Sidebar
         isOpen={sidebarOpen}

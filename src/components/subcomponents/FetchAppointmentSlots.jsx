@@ -118,97 +118,131 @@ export const checkAvailability = async (salonId, date, totalDuration) => {
 export const createAppointment = async (salonId, appointmentData) => {
   try {
     const token = getAuthToken();
-    
+
     const response = await axios.post(
       `${API_BASE_URL}/appointments`,
       appointmentData,
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
       }
     );
-    
+
     return response.data;
   } catch (error) {
     console.error("Error creating appointment:", error);
-    throw new Error(error.response?.data?.message || "Failed to confirm appointments. Please try again.");
+    throw new Error(
+      error.response?.data?.message ||
+        "Failed to confirm appointments. Please try again."
+    );
   }
 };
 
 // Make a complete booking with availability check and appointment creation
-export const makeAppointment = async (salonId, date, totalDuration, selectedSlot, pendingAppointments) => {
-    // Format date as DD/MM/YYYY for the API
-    const appointmentDate = moment(date).format("DD/MM/YYYY");
-    const startTime = moment(date).format("HH:mm:ss");
-    const lastAppointment = pendingAppointments[pendingAppointments.length - 1];
-    const endTime = moment(lastAppointment.end).format("HH:mm:ss");
-  
-    // Create data object for the API with all selected services
-    const appointmentData = {
-      appointment: {
-        salon_id: salonId,
-        slot_id: selectedSlot.slotId,
-        referral_id: null,
-        comment: "Booked via Salon Booking App",
-        date: appointmentDate,
-        start_time: startTime,
-        end_time: endTime,
-        appointment_services_attributes: pendingAppointments.map(appt => ({
-          salon_service_id: appt.metadata.serviceId
-        }))
-      }
-    };
-  
-    // Directly make the appointment without checking availability
-    return await createAppointment(salonId, appointmentData);
+export const makeAppointment = async (
+  salonId,
+  date,
+  totalDuration,
+  selectedSlot,
+  pendingAppointments,
+  userData
+) => {
+  const appointmentDate = moment(date).format("DD/MM/YYYY");
+  const startTime = moment(date).format("HH:mm:ss");
+  const lastAppointment = pendingAppointments[pendingAppointments.length - 1];
+  const endTime = moment(lastAppointment.end).format("HH:mm:ss");
+
+  const appointmentData = {
+    appointment: {
+      salon_id: salonId,
+      slot_id: selectedSlot.slotId,
+      referral_id: null,
+      comment: `Booked via Salon Booking App - ${userData?.username || "Guest"}`,
+      date: appointmentDate,
+      start_time: startTime,
+      end_time: endTime,
+
+      // ✅ Send contact info for billing
+      on_behalf_of_mobile_no: userData.mobile,
+      on_behalf_of_username: userData.username,
+
+      appointment_services_attributes: pendingAppointments.map((appt) => ({
+        salon_service_id: appt.metadata.serviceId,
+      })),
+    },
   };
-  
-  export const fetchAppointments = async () => {
-    try {
-      const token = getAuthToken();
-      const userId = parseJwt(token)?.user_id;
-  
-      if (!userId) throw new Error("User ID not found in token.");
-  
-      const response = await axios.get(`${API_BASE_URL}/users/${userId}/appointments`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      return response.data?.data?.appointments || [];
-    } catch (error) {
-      // console.error("Error fetching appointments:", error);
-      throw new Error("Unable to fetch appointments. Please try again.");
+
+  return await createAppointment(salonId, appointmentData); // Keep token here
+};
+
+
+  export const fetchAppointments = async (username, mobile) => {
+  try {
+    const token = getAuthToken();
+    const salonId = getSalonId();
+    // console.log(getSalonId())
+    if (!salonId) throw new Error("Salon ID is missing.");
+    
+    // Create URL with query parameters
+    let url = `${API_BASE_URL}/salons/${salonId}/appointments`;
+    
+    // Add query parameters if provided
+    const queryParams = new URLSearchParams();
+    if (username) queryParams.append('username', username);
+    if (mobile) queryParams.append('mobile', mobile);
+    
+    // Append query parameters to URL if any exist
+    const queryString = queryParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
     }
-  };
+    
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log(response?.data?.data?.appointments)
+    
+    return response?.data?.data?.appointments || [];
+  } catch (error) {
+    console.error("Fetch Appointments Error:", error?.response || error);
+    throw new Error("Unable to fetch appointments. Please try again.");
+  }
+};
 
   // Add this to salonApiService.js
 
-export const generateBill = async (appointmentId) => {
-    const token = getAuthToken();
-  
-    try {
-      await axios.get(
-        `${API_BASE_URL}/appointments/${appointmentId}/send_bill`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      return { success: true };
-    } catch (error) {
-      console.error("Error generating bill:", error);
-      return {
-        success: false,
-        message: error.response?.data?.message || "Failed to generate bill.",
-      };
-    }
-  };
+  export const generateBill = async (appointmentId, userData = null) => {
+  const token = getAuthToken();
+ 
+  try {
+    // Basic request config with authorization
+    const requestConfig = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    };
+    
+    // Remove the conditional that adds the on_behalf_of parameters
+    // This allows the default behavior which sends to WhatsApp
+   
+    await axios.get(
+      `${API_BASE_URL}/appointments/${appointmentId}/send_bill`,
+      requestConfig
+    );
+   
+    return { success: true };
+  } catch (error) {
+    console.error("Error generating bill:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Failed to generate bill.",
+    };
+  }
+};
   
   
 export default {

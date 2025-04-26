@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchAppointments, generateBill } from "./FetchAppointmentSlots";
 import { useNavigate } from "react-router-dom";
 
-const Appointments = () => {
+const AppointmentsDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -10,20 +10,49 @@ const Appointments = () => {
   const [selectedTab, setSelectedTab] = useState("upcoming");
   const navigate = useNavigate();
 
+  // Statistics state
+  const [stats, setStats] = useState({
+    total: 0,
+    completed: 0,
+    cancelled: 0,
+    declined: 0,
+    pending: 0,
+    noShow: 0
+  });
+
   useEffect(() => {
-    const loadAppointments = async () => {
+    const loadAppointments = async () => {      
       try {
         const data = await fetchAppointments();
-        setAppointments(data);
+        console.log("Appointments:", data);
+  
+        if (data && Array.isArray(data)) {
+          setAppointments(data);
+  
+          const calculatedStats = {
+            total: data.length,
+            completed: data.filter(a => a.status.toLowerCase() === "confirmed").length,
+            cancelled: data.filter(a => a.status.toLowerCase() === "cancelled").length,
+            declined: data.filter(a => a.status.toLowerCase() === "declined").length,
+            pending: data.filter(a => a.status.toLowerCase() === "pending").length,
+            noShow: data.filter(a => a.status.toLowerCase() === "no show").length
+          };
+  
+          setStats(calculatedStats);
+        } else {
+          console.error("Unexpected API response structure:", data);
+          setError("Appointments data is not in the expected format.");
+        }
       } catch (err) {
         setError(err.message || "Failed to load appointments.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     loadAppointments();
   }, []);
+  
 
   const handleGenerateBill = async (appointmentId) => {
     setBillStatus((prev) => ({ ...prev, [appointmentId]: "loading" }));
@@ -56,37 +85,29 @@ const Appointments = () => {
         return "bg-amber-50 text-amber-700 border border-amber-200";
       case "declined":
         return "bg-rose-50 text-rose-700 border border-rose-200";
+      case "cancelled":
+        return "bg-purple-50 text-purple-700 border border-purple-200";
+      case "no show":
+        return "bg-gray-100 text-gray-700 border border-gray-200";
       default:
         return "bg-gray-50 text-gray-700 border border-gray-200";
     }
   };
 
-  const getStatusIcon = (status) => {
+  const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
       case "confirmed":
-        return (
-          <svg className="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-        );
+        return "#2DC653"; // emerald
       case "pending":
-        return (
-          <svg className="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-          </svg>
-        );
+        return "#F39C12"; // amber
       case "declined":
-        return (
-          <svg className="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-          </svg>
-        );
+        return "#2280BF"; // rose
+      case "cancelled":
+        return "#D91F0B"; // purple
+      case "no show":
+        return "#ADB5BD"; // gray
       default:
-        return (
-          <svg className="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-          </svg>
-        );
+        return "#6b7280"; // gray
     }
   };
 
@@ -99,7 +120,7 @@ const Appointments = () => {
   };
 
   const filteredAppointments = appointments.filter((appt) =>
-    selectedTab === "upcoming" ? isUpcoming(appt.date) : !isUpcoming(appt.date)
+    selectedTab === "upcoming" ? isUpcoming(appt?.date) : !isUpcoming(appt?.date)
   );
 
   const openInvoiceWindow = (ulid) => {
@@ -129,19 +150,137 @@ const Appointments = () => {
     );
 
   return (
-    <div className="w-320 mx-auto p-4 sm:p-6 ">
-      <h2 className="text-3xl font-bold mb-8 text-center bg-gradient-to-r from-[#F25435] to-[#DD4F2E] bg-clip-text text-transparent">
-        Your Appointments
+    <div className="w-full mx-auto p-4 sm:p-6">
+      <h2 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] bg-clip-text text-transparent">
+        Appointments Dashboard
       </h2>
 
-      {/* Tabs */}
-      <div className="flex justify-center mb-8">
+      {/* Dashboard Stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-gray-800">{stats.total}</div>
+          <div className="text-sm text-gray-500">Total Appointments</div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-emerald-600">{stats.completed}</div>
+          <div className="text-sm text-gray-500">Completed</div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-purple-600">{stats.cancelled}</div>
+          <div className="text-sm text-gray-500">Cancelled</div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-rose-600">{stats.declined}</div>
+          <div className="text-sm text-gray-500">Declined</div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-amber-500">{stats.pending}</div>
+          <div className="text-sm text-gray-500">Pending</div>
+        </div>
+        
+        <div className="bg-white rounded-xl shadow p-4 text-center">
+          <div className="text-2xl font-bold text-gray-600">{stats.noShow}</div>
+          <div className="text-sm text-gray-500">No Show</div>
+        </div>
+      </div>
+
+      {/* Visualization Section */}
+      <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Status Chart */}
+        <div className="bg-white rounded-xl shadow p-4 ">
+          <h3 className="font-semibold mb-4 text-gray-700">Appointments By Status</h3>
+          <div className="flex justify-center">
+            <div className="w-40 h-40 rounded-full border-8 border-white relative flex items-center justify-center"
+                 style={{ 
+                   backgroundImage: `conic-gradient(
+                     ${getStatusColor("confirmed")} 0deg, 
+                     ${getStatusColor("confirmed")} ${stats.completed/stats.total*360}deg, 
+                     ${getStatusColor("cancelled")} ${stats.completed/stats.total*360}deg, 
+                     ${getStatusColor("cancelled")} ${(stats.completed+stats.cancelled)/stats.total*360}deg,
+                     ${getStatusColor("declined")} ${(stats.completed+stats.cancelled)/stats.total*360}deg, 
+                     ${getStatusColor("declined")} ${(stats.completed+stats.cancelled+stats.declined)/stats.total*360}deg,
+                     ${getStatusColor("pending")} ${(stats.completed+stats.cancelled+stats.declined)/stats.total*360}deg, 
+                     ${getStatusColor("pending")} ${(stats.completed+stats.cancelled+stats.declined+stats.pending)/stats.total*360}deg,
+                     ${getStatusColor("no show")} ${(stats.completed+stats.cancelled+stats.declined+stats.pending)/stats.total*360}deg, 
+                     ${getStatusColor("no show")} 360deg
+                   )`
+                 }}>
+              <div className="bg-white w-24 h-24 rounded-full flex items-center justify-center text-lg font-bold">
+                {stats.total}
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: getStatusColor("confirmed")}}></div>
+              <span className="text-sm">Completed: {stats.completed}</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: getStatusColor("cancelled")}}></div>
+              <span className="text-sm">Cancelled: {stats.cancelled}</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: getStatusColor("declined")}}></div>
+              <span className="text-sm">Declined: {stats.declined}</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: getStatusColor("pending")}}></div>
+              <span className="text-sm">Pending: {stats.pending}</span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: getStatusColor("no show")}}></div>
+              <span className="text-sm">No Show: {stats.noShow}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Service Category Chart (Placeholder) */}
+        <div className="bg-white rounded-xl shadow p-4">
+          <h3 className="font-semibold mb-4 text-gray-700">Appointments By Service Category</h3>
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="w-full flex space-x-4 justify-center">
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-600 w-8" style={{height: '120px'}}></div>
+                <span className="text-xs mt-1">Haircut</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-400 w-8" style={{height: '80px'}}></div>
+                <span className="text-xs mt-1">Styling</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-600 w-8" style={{height: '60px'}}></div>
+                <span className="text-xs mt-1">Color</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-400 w-8" style={{height: '150px'}}></div>
+                <span className="text-xs mt-1">Facial</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-600 w-8" style={{height: '100px'}}></div>
+                <span className="text-xs mt-1">Manicure</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-blue-400 w-8" style={{height: '90px'}}></div>
+                <span className="text-xs mt-1">Pedicure</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs for Appointment History */}
+      <h3 className="text-xl font-bold mb-4 text-gray-800">Appointment History</h3>
+      <div className="flex mb-6">
         <div className="flex rounded-xl bg-gray-100 p-1 shadow-inner">
           <button
             onClick={() => setSelectedTab("upcoming")}
             className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
               selectedTab === "upcoming"
-                ? "bg-white text-[#F25435] shadow"
+                ? "bg-white text-[#4F46E5] shadow"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
@@ -151,7 +290,7 @@ const Appointments = () => {
             onClick={() => setSelectedTab("previous")}
             className={`px-6 py-2.5 rounded-lg font-medium transition-all duration-200 ${
               selectedTab === "previous"
-                ? "bg-white text-[#F25435] shadow"
+                ? "bg-white text-[#4F46E5] shadow"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
@@ -161,129 +300,76 @@ const Appointments = () => {
       </div>
 
       {filteredAppointments.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-2xl shadow-sm border border-gray-100 mt-50">
+        <div className="text-center py-16 bg-gray-50 rounded-2xl shadow-sm border border-gray-100">
           <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           <p className="text-gray-500 font-medium text-lg">No {selectedTab} appointments found.</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {filteredAppointments.map((appt) => (
-            <div
-              key={appt.id}
-              className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition duration-300"
-            >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-[#F25435] to-[#DD4F2E] p-4 text-white">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold">{appt.salon?.name}</h3>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium inline-flex items-center ${getStatusClass(appt.status)}`}>
-                    {getStatusIcon(appt.status)}
-                    {appt.status}
-                  </span>
-                </div>
-              </div>
-
-              {/* Body */}
-              <div className="p-5">
-                <div className="flex flex-wrap gap-6 mb-4">
-                  {/* Date & Time */}
-                  <div className="flex items-start space-x-3">
-                    <div className="text-[#F25435]">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white rounded-xl shadow">
+            <thead>
+              <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                <th className="py-3 px-4 text-left">Customer</th>
+                <th className="py-3 px-4 text-left">Date & Time</th>
+                <th className="py-3 px-4 text-left">Services</th>
+                <th className="py-3 px-4 text-left">Duration</th>
+                <th className="py-3 px-4 text-left">Total Bill</th>
+                <th className="py-3 px-4 text-left">Status</th>
+                <th className="py-3 px-4 text-center">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-600 text-sm">
+              {filteredAppointments.map((appt) => (
+                <tr key={appt.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <div className="font-medium">{appt.user?.username || "Customer Name"}</div>
+                    <div className="text-gray-500 text-xs">{appt.user?.mobile || "Phone number"}</div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div>{formatDate(appt.date)}</div>
+                    <div className="text-xs text-gray-500">
+                      {appt.start_time} - {appt.end_time}
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500 font-medium">DATE & TIME</p>
-                      <p className="text-gray-700 font-medium">{formatDate(appt.date)}</p>
-                      <p className="text-gray-700">{appt.start_time} - {appt.end_time}</p>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="max-w-xs truncate">
+                      {(appt.salon_services || []).map((s) => s.custom_name || s.service_name).join(", ")}
                     </div>
-                  </div>
-
-                  {/* Amount */}
-                  <div className="flex items-start space-x-3">
-                    <div className="text-[#F25435]">
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                  </td>
+                  <td className="py-3 px-4">{appt.duration || "60"} min</td>
+                  <td className="py-3 px-4 font-medium">₹{appt.amount}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-1 rounded-full text-xs ${getStatusClass(appt.status)}`}>
+                      {appt.status}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-center">
+                    <div className="flex space-x-2 justify-center">
+                      <button
+                        onClick={() => handleGenerateBill(appt.id)}
+                        disabled={billStatus[appt.id] === "loading"}
+                        className="bg-indigo-100 text-indigo-600 px-2 py-1 rounded text-xs hover:bg-indigo-200 transition"
+                      >
+                        {billStatus[appt.id] === "loading" ? "..." : "Generate Bill"}
+                      </button>
+                      <button
+                        onClick={() => openInvoiceWindow(appt.ulid)}
+                        className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs hover:bg-gray-200 transition"
+                      >
+                        View Bill
+                      </button>
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500 font-medium">AMOUNT</p>
-                      <p className="text-gray-700 font-bold">₹{appt.amount}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Services */}
-                <div className="mt-5">
-                  <h4 className="text-sm text-gray-500 font-medium mb-2">SERVICES BOOKED</h4>
-                  <div className="space-y-2 bg-gray-50 rounded-xl p-3">
-                    {appt.salon_services.map((service, index) => (
-                      <div key={service.id} className={`flex justify-between ${index !== 0 ? "border-t border-gray-200 pt-2" : ""}`}>
-                      <p className="text-gray-700 font-medium">{service.custom_name || service.service_name}</p>
-                      <p className="text-gray-700 font-semibold">₹{service.amount}</p>
-                    </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Buttons */}
-                <div className="mt-6 flex gap-3">
-                  <button
-                    onClick={() => handleGenerateBill(appt.id)}
-                    disabled={billStatus[appt.id] === "loading"}
-                    className="flex-1 bg-gradient-to-r from-[#F25435] to-[#DD4F2E] hover:from-[#F25435] to-[#DD4F2E] text-white px-4 py-3 rounded-xl font-medium transition disabled:opacity-50 flex justify-center items-center"
-                  >
-                    {billStatus[appt.id] === "loading" ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Generating...
-                      </>
-                    ) : (
-                      <>Generate Bill</>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => openInvoiceWindow(appt.ulid)}
-                    className="flex-1 bg-white border-2 border-[#F25435] text-[#F25435] hover:bg-purple-50 px-4 py-3 rounded-xl font-medium transition flex justify-center items-center"
-                  >
-                    <svg className="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    View Bill
-                  </button>
-                </div>
-
-                {billStatus[appt.id] === "success" && (
-                  <div className="mt-3 bg-emerald-50 text-emerald-700 p-2 rounded-lg flex items-center text-sm">
-                    <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Bill sent successfully!
-                  </div>
-                )}
-                
-                {billStatus[appt.id] === "error" && (
-                  <div className="mt-3 bg-rose-50 text-rose-700 p-2 rounded-lg flex items-center text-sm">
-                    <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Failed to send bill. Please try again.
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>
   );
 };
 
-export default Appointments;
+export default AppointmentsDashboard;
