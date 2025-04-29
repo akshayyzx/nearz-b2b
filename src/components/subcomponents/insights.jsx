@@ -10,6 +10,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler
 } from 'chart.js';
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
 
@@ -23,7 +24,8 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Filler
 );
 
 const SalonDashboard = () => {
@@ -159,57 +161,124 @@ const SalonDashboard = () => {
     }
   };
   
-  // Chart colors
+  // Premium color palette
   const colors = {
-    blue: {
-      backgroundColor: 'rgba(53, 162, 235, 0.5)',
-      borderColor: 'rgb(53, 162, 235)'
+    primary: {
+      gradient: ['rgba(101, 116, 205, 0.2)', 'rgba(101, 116, 205, 0.0)'],
+      backgroundColor: 'rgba(101, 116, 205, 0.2)',
+      borderColor: 'rgba(101, 116, 205, 1)'
     },
-    red: {
-      backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      borderColor: 'rgb(255, 99, 132)'
+    secondary: {
+      gradient: ['rgba(75, 192, 192, 0.2)', 'rgba(75, 192, 192, 0.0)'],
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)'
     },
-    green: {
-      backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      borderColor: 'rgb(75, 192, 192)'
+    accent: {
+      backgroundColor: 'rgba(255, 159, 64, 0.2)',
+      borderColor: 'rgba(255, 159, 64, 1)'
     },
-    yellow: {
-      backgroundColor: 'rgba(255, 206, 86, 0.5)',
-      borderColor: 'rgb(255, 206, 86)'
+    danger: {
+      backgroundColor: 'rgba(255, 99, 132, 0.2)',
+      borderColor: 'rgba(255, 99, 132, 1)'
     },
-    purple: {
-      backgroundColor: 'rgba(153, 102, 255, 0.5)',
-      borderColor: 'rgb(153, 102, 255)'
-    },
-    orange: {
-      backgroundColor: 'rgba(255, 159, 64, 0.5)',
-      borderColor: 'rgb(255, 159, 64)'
+    neutral: {
+      backgroundColor: 'rgba(201, 203, 207, 0.2)',
+      borderColor: 'rgba(201, 203, 207, 1)'
     },
     pieColors: [
-      'rgba(255, 99, 132, 0.7)',
-      'rgba(54, 162, 235, 0.7)',
-      'rgba(255, 206, 86, 0.7)',
-      'rgba(75, 192, 192, 0.7)',
-      'rgba(153, 102, 255, 0.7)',
-      'rgba(255, 159, 64, 0.7)'
+      'rgba(101, 116, 205, 0.8)',
+      'rgba(75, 192, 192, 0.8)',
+      'rgba(255, 159, 64, 0.8)',
+      'rgba(255, 99, 132, 0.8)',
+      'rgba(54, 162, 235, 0.8)',
+      'rgba(153, 102, 255, 0.8)'
     ]
   };
   
-  // Chart options
+  // Chart options with premium styling
   const options = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 12
+          },
+          usePointStyle: true,
+          padding: 20
+        }
       },
       title: {
-        display: true,
+        display: false,
         font: {
-          size: 16
+          family: "'Inter', sans-serif",
+          size: 16,
+          weight: '500'
         }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        titleColor: '#333',
+        bodyColor: '#666',
+        borderColor: '#e0e0e0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 4,
+        titleFont: {
+          family: "'Inter', sans-serif",
+          size: 14,
+          weight: '600'
+        },
+        bodyFont: {
+          family: "'Inter', sans-serif",
+          size: 13
+        },
+        displayColors: true,
+        usePointStyle: true
       }
     },
+    scales: {
+      x: {
+        grid: {
+          display: false,
+          drawBorder: false
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 12
+          },
+          color: '#9ca3af'
+        }
+      },
+      y: {
+        grid: {
+          borderDash: [2, 4],
+          color: 'rgba(226, 232, 240, 0.6)'
+        },
+        ticks: {
+          font: {
+            family: "'Inter', sans-serif",
+            size: 12
+          },
+          color: '#9ca3af',
+          padding: 10
+        },
+        beginAtZero: true
+      }
+    },
+    elements: {
+      point: {
+        radius: 3,
+        hoverRadius: 5
+      },
+      line: {
+        tension: 0.4
+      }
+    }
   };
   
   // Create datasets for each chart type
@@ -221,8 +290,18 @@ const SalonDashboard = () => {
           label: title,
           data: data.data,
           borderColor: color.borderColor,
-          backgroundColor: color.backgroundColor,
-          tension: 0.3
+          backgroundColor: context => {
+            const ctx = context.chart.ctx;
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, color.gradient[0]);
+            gradient.addColorStop(1, color.gradient[1]);
+            return gradient;
+          },
+          pointBackgroundColor: color.borderColor,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          fill: true,
+          tension: 0.4
         }
       ]
     };
@@ -237,7 +316,11 @@ const SalonDashboard = () => {
           data: data.data,
           backgroundColor: color.backgroundColor,
           borderColor: color.borderColor,
-          borderWidth: 1
+          borderWidth: 1,
+          borderRadius: 6,
+          hoverBackgroundColor: color.borderColor,
+          barThickness: 'flex',
+          maxBarThickness: 50
         }
       ]
     };
@@ -251,193 +334,434 @@ const SalonDashboard = () => {
           label: title,
           data: data.data,
           backgroundColor: colors.pieColors.slice(0, data.labels.length),
-          borderWidth: 1
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          hoverOffset: 5
         }
       ]
     };
   };
   
+  // Format numbers with commas
+  const formatNumber = (num) => {
+    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  };
+  
   // Get current view's data
   const currentViewData = chartData[viewType];
   
+  // Calculate summary metrics
+  const totalRevenue = currentViewData.chart1.data.reduce((acc, val) => acc + val, 0);
+  const totalAppointments = currentViewData.chart2.data.reduce((acc, val) => acc + val, 0);
+  const topService = currentViewData.chart3.labels[
+    currentViewData.chart3.data.indexOf(Math.max(...currentViewData.chart3.data))
+  ];
+  const conversionRate = 85; // Dummy data
+  
   return (
-    <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' ,width:'90vw',marginLeft:'3vw'}}>
-      <h1 style={{ fontSize: '48px', fontWeight: 'bold', marginLeft:'35vw' }}>
-    User Insights
-  </h1>
-      <div style={{ marginBottom: '20px' }}>
-        <label htmlFor="viewType" style={{ marginRight: '10px', fontWeight: 'bold', fontSize: '16px' }}>
-          View Type:
-        </label>
-        <select
-          id="viewType"
-          value={viewType}
-          onChange={(e) => setViewType(e.target.value)}
-          style={{ padding: '8px', borderRadius: '4px', fontSize: '16px', border: '1px solid #ccc' }}
-        >
-          <option value="weekly">Weekly</option>
-          <option value="monthly">Monthly</option>
-          <option value="sixMonths">Last 6 Months</option>
-        </select>
+    <div className="bg-gray-50 min-h-screen ml-10 mt-5 rounded-xl">
+      {/* Top navigation */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-gray-800">Salon Analytics</h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <select
+              value={viewType}
+              onChange={(e) => setViewType(e.target.value)}
+              className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            >
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="sixMonths">Last 6 Months</option>
+            </select>
+            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out">
+              Export Data
+            </button>
+          </div>
+        </div>
       </div>
       
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))', 
-        gap: '20px',
-        maxWidth: '100%'
-      }}>
-        {/* Chart 1 - Revenue (Line) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart1.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Line 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart1.title}}}} 
-              data={createLineDataset(currentViewData.chart1, currentViewData.chart1.title, colors.blue)} 
-            />
+      <div className="container mx-auto px-6 py-8 w-[250%] max-w-[1400px]  rounded-lg">
+        {/* Page header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+            <p className="mt-1 text-gray-500">Comprehensive insights into your salon's performance</p>
+          </div>
+          <div className="mt-4 md:mt-0">
+            <span className="inline-flex rounded-md shadow-sm">
+              <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Generate Report
+              </button>
+            </span>
           </div>
         </div>
         
-        {/* Chart 2 - Appointments (Line) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart2.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Line 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart2.title}}}} 
-              data={createLineDataset(currentViewData.chart2, currentViewData.chart2.title, colors.green)} 
-            />
+        {/* KPI summary cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Revenue */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-indigo-100 rounded-full p-3">
+                  <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                    <dd>
+                      <div className="text-lg font-bold text-gray-900">${formatNumber(totalRevenue)}</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-6 py-2">
+              <div className="text-sm text-green-600 font-medium">
+                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                8.2% increase
+              </div>
+            </div>
+          </div>
+          
+          {/* Appointments */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-blue-100 rounded-full p-3">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Total Appointments</dt>
+                    <dd>
+                      <div className="text-lg font-bold text-gray-900">{formatNumber(totalAppointments)}</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-6 py-2">
+              <div className="text-sm text-green-600 font-medium">
+                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                5.7% increase
+              </div>
+            </div>
+          </div>
+          
+          {/* Top Service */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-teal-100 rounded-full p-3">
+                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Top Service</dt>
+                    <dd>
+                      <div className="text-lg font-bold text-gray-900">{topService}</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-6 py-2">
+              <div className="text-sm text-gray-600 font-medium">
+                Most popular choice
+              </div>
+            </div>
+          </div>
+          
+          {/* Conversion Rate */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 bg-purple-100 rounded-full p-3">
+                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                </div>
+                <div className="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt className="text-sm font-medium text-gray-500 truncate">Conversion Rate</dt>
+                    <dd>
+                      <div className="text-lg font-bold text-gray-900">{conversionRate}%</div>
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-50 px-6 py-2">
+              <div className="text-sm text-green-600 font-medium">
+                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                </svg>
+                3.2% increase
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Chart 3 - Service Distribution (Bar) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart3.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Bar 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart3.title}}}} 
-              data={createBarDataset(currentViewData.chart3, currentViewData.chart3.title, colors.purple)} 
-            />
+        {/* Chart grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Chart 1 - Revenue */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart1.title}</h3>
+                <div className="flex items-center">
+                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    12.5%
+                  </div>
+                </div>
+              </div>
+              <div className="h-72">
+                <Line 
+                  options={options} 
+                  data={createLineDataset(currentViewData.chart1, currentViewData.chart1.title, colors.primary)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 2 - Appointments */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart2.title}</h3>
+                <div className="flex items-center">
+                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    8.3%
+                  </div>
+                </div>
+              </div>
+              <div className="h-72">
+                <Line 
+                  options={options} 
+                  data={createLineDataset(currentViewData.chart2, currentViewData.chart2.title, colors.secondary)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 3 - Service Distribution */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart3.title}</h3>
+              </div>
+              <div className="h-72">
+                <Bar 
+                  options={options} 
+                  data={createBarDataset(currentViewData.chart3, currentViewData.chart3.title, colors.accent)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 4 - Booking Channels */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart4.title}</h3>
+              </div>
+              <div className="h-72 flex items-center justify-center">
+                <div className="w-64">
+                  <Pie 
+                    options={options} 
+                    data={createPieDataset(currentViewData.chart4, currentViewData.chart4.title)} 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 5 - Cancellations */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart5.title}</h3>
+                <div className="flex items-center">
+                  <div className="flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                    </svg>
+                    4.2%
+                  </div>
+                </div>
+              </div>
+              <div className="h-72">
+                <Bar 
+                  options={options} 
+                  data={createBarDataset(currentViewData.chart5, currentViewData.chart5.title, colors.danger)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 6 - Product Sales */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart6.title}</h3>
+                <div className="flex items-center">
+                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    10.3%
+                  </div>
+                </div>
+              </div>
+              <div className="h-72">
+                <Bar 
+                  options={options} 
+                  data={createBarDataset(currentViewData.chart6, currentViewData.chart6.title, colors.neutral)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 7 - Peak Hours */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart7.title}</h3>
+              </div>
+              <div className="h-72">
+                <Bar 
+                  options={options} 
+                  data={createBarDataset(currentViewData.chart7, currentViewData.chart7.title, colors.primary)} 
+                />
+              </div>
+            </div>
+          </div>
+          
+          {/* Chart 8 - Customer Type */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="px-6 pt-5 pb-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart8.title}</h3>
+              </div>
+              <div className="h-72 flex items-center justify-center">
+                <div className="w-64">
+                  <Doughnut 
+                    options={options} 
+                    data={createPieDataset(currentViewData.chart8, currentViewData.chart8.title)} 
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Chart 4 - Booking Channels (Pie) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart4.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Pie 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart4.title}}}} 
-              data={createPieDataset(currentViewData.chart4, currentViewData.chart4.title)} 
-            />
+        {/* Bottom section - Additional insights */}
+        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Insights</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-500">Customer Retention</span>
+                <div className="mt-2 relative pt-1">
+                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-blue-200">
+                    <div style={{ width: '78%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"></div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold text-gray-600">78% retention rate</div>
+                    <div className="text-xs font-semibold text-green-600">↑ 3.2%</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-500">Stylist Utilization</span>
+                <div className="mt-2 relative pt-1">
+                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
+                    <div style={{ width: '92%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 transition-all duration-500"></div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold text-gray-600">92% utilization rate</div>
+                    <div className="text-xs font-semibold text-green-600">↑ 5.7%</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-500">Revenue Per Client</span>
+                <div className="mt-2 relative pt-1">
+                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-purple-200">
+                    <div style={{ width: '85%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500"></div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-semibold text-gray-600">$85 per client average</div>
+                    <div className="text-xs font-semibold text-green-600">↑ 7.5%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
-        {/* Chart 5 - Cancellations (Bar) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart5.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Bar 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart5.title}}}} 
-              data={createBarDataset(currentViewData.chart5, currentViewData.chart5.title, colors.red)} 
-            />
+        {/* Recommendations section */}
+        {/* <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md overflow-hidden">
+          <div className="px-6 py-6 sm:px-8">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 bg-white rounded-full p-3">
+                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+              <div className="ml-5">
+                <h3 className="text-lg font-bold text-white">AI-Powered Recommendations</h3>
+                <p className="text-indigo-100">Based on your salon's performance data</p>
+              </div>
+            </div>
+            
+            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ">
+              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
+                <h4 className="text-white font-medium mb-2 text-black">Increase Marketing Focus</h4>
+                <p className="text-indigo-100 text-sm text-black">Promote color services to boost your second highest revenue generator by 15%.</p>
+              </div>
+              
+              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
+                <h4 className="text-white font-medium mb-2 text-black">Peak Hours Optimization</h4>
+                <p className="text-indigo-100 text-sm text-black" >Consider adding staff during 5-7pm to maximize revenue during your busiest times.</p>
+              </div>
+              
+              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
+                <h4 className="text-white font-medium mb-2 text-black">Client Retention Strategy</h4>
+                <p className="text-indigo-100 text-sm text-black">Implement a loyalty program to increase returning customer percentage.</p>
+              </div>
+            </div>
           </div>
-        </div>
+        </div> */}
         
-        {/* Chart 6 - Product Sales (Bar) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart6.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Bar 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart6.title}}}} 
-              data={createBarDataset(currentViewData.chart6, currentViewData.chart6.title, colors.orange)} 
-            />
-          </div>
-        </div>
-        
-        {/* Chart 7 - Peak Hours (Bar) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart7.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Bar 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart7.title}}}} 
-              data={createBarDataset(currentViewData.chart7, currentViewData.chart7.title, colors.yellow)} 
-            />
-          </div>
-        </div>
-        
-        {/* Chart 8 - Customer Type (Doughnut) */}
-        <div style={{ 
-          border: '1px solid #ddd', 
-          borderRadius: '8px', 
-          padding: '15px', 
-          backgroundColor: 'white',
-          boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-        }}>
-          <h3 style={{ marginTop: '0', marginBottom: '15px', color: '#333' }}>
-            {currentViewData.chart8.title}
-          </h3>
-          <div style={{ height: '300px' }}>
-            <Doughnut 
-              options={{...options, plugins: {...options.plugins, title: {display: true, text: currentViewData.chart8.title}}}} 
-              data={createPieDataset(currentViewData.chart8, currentViewData.chart8.title)} 
-            />
-          </div>
-        </div>
+        {/* Footer */}
+        {/* <div className="mt-8 text-center text-sm text-gray-500 pb-6">
+          <p>© {new Date().getFullYear()} Salon Analytics Dashboard • Premium Edition</p>
+        </div> */}
       </div>
     </div>
   );

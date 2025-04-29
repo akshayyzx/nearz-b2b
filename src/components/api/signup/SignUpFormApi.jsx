@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = "https://polar-dawn-37707.herokuapp.com";
+const BASE_URL = "https://shielded-scrubland-64985.herokuapp.com";
 
 export const SignUpFormApi = async (phone, referralCode = "", name = "") => { 
   try {

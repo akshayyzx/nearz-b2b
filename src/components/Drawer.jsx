@@ -37,15 +37,21 @@ const Sidebar = ({ onSelectView, activeView }) => {
         active={activeView === 'reports'}
         onClick={() => onSelectView('reports')}
       />
+      <SidebarIcon icon={<Tag size={20} />} 
+      active={activeView==='appointments'}
+      onClick={()=> onSelectView('appointments')}/>
 
+      <SidebarIcon icon={<Settings size={20} />} 
+      active ={activeView==='settings'}
+      onClick={()=>onSelectView('settings')}/>
+
+      
       {/* Other sidebar icons */}
-      <SidebarIcon icon={<Tag size={20} />} />
-      <SidebarIcon icon={<BookOpen size={20} />} />
-      <SidebarIcon icon={<User size={20} />} />
-      <SidebarIcon icon={<Megaphone size={20} />} />
-      <SidebarIcon icon={<Users size={20} />} />
-      <SidebarIcon icon={<Grid size={20} />} />
-      <SidebarIcon icon={<Settings size={20} />} />
+      <SidebarIcon icon={<BookOpen size={20} className="opacity-40"/>} />
+      <SidebarIcon icon={<User size={20} className="opacity-40"/>} />
+      <SidebarIcon icon={<Megaphone size={20} className="opacity-40"/>} />
+      <SidebarIcon icon={<Users size={20} className="opacity-40"/>} />
+      <SidebarIcon icon={<Grid size={20} className="opacity-40"/>} />
     </aside>
   );
 };

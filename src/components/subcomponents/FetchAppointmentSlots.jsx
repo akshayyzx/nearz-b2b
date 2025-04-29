@@ -2,7 +2,7 @@
 import axios from "axios";
 import moment from "moment";
 
-const API_BASE_URL = "https://polar-dawn-37707.herokuapp.com";
+const API_BASE_URL = "https://shielded-scrubland-64985.herokuapp.com";
 
 // JWT Token parser helper function
 const parseJwt = (token) => {
