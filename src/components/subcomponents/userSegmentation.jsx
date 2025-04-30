@@ -304,7 +304,7 @@ export default function RFMSegmentsTreemap() {
 
   return (
     <div className="w-[200%] max-w-[1400px] p-6 bg-white rounded-lg shadow mx-auto mt-5 ml-12">
-      <h2 className="text-4xl font-semibold mb-4 text-center">RFM Customer Segmentation Analysis</h2>
+      <h2 className="text-4xl font-bold mb-4 text-center">Customer Segmentation Analysis</h2>
       
       {/* D3.js Treemap Visualization */}
       <div className="mb-8">

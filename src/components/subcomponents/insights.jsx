@@ -364,7 +364,7 @@ const SalonDashboard = () => {
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="px-6 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-800">Salon Analytics</h1>
+            <h1 className="text-2xl font-bold text-gray-800">Sales Analytics</h1>
           </div>
           <div className="flex items-center space-x-4">
             <select
@@ -386,10 +386,10 @@ const SalonDashboard = () => {
       <div className="container mx-auto px-6 py-8 w-[250%] max-w-[1400px]  rounded-lg">
         {/* Page header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          <div>
+          {/* <div>
             <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
             <p className="mt-1 text-gray-500">Comprehensive insights into your salon's performance</p>
-          </div>
+          </div> */}
           <div className="mt-4 md:mt-0">
             <span className="inline-flex rounded-md shadow-sm">
               <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
@@ -417,7 +417,7 @@ const SalonDashboard = () => {
                   <dl>
                     <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
                     <dd>
-                      <div className="text-lg font-bold text-gray-900">${formatNumber(totalRevenue)}</div>
+                      <div className="text-lg font-bold text-gray-900">₹{formatNumber(totalRevenue)}</div>
                     </dd>
                   </dl>
                 </div>
@@ -660,7 +660,7 @@ const SalonDashboard = () => {
           </div>
           
           {/* Chart 8 - Customer Type */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 pt-5 pb-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart8.title}</h3>
@@ -678,7 +678,7 @@ const SalonDashboard = () => {
         </div>
         
         {/* Bottom section - Additional insights */}
-        <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {/* <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-5">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Insights</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -715,14 +715,14 @@ const SalonDashboard = () => {
                     <div style={{ width: '85%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500"></div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold text-gray-600">$85 per client average</div>
+                    <div className="text-xs font-semibold text-gray-600">₹85 per client average</div>
                     <div className="text-xs font-semibold text-green-600">↑ 7.5%</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
         
         {/* Recommendations section */}
         {/* <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md overflow-hidden">

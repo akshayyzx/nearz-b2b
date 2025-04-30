@@ -189,13 +189,14 @@ const MyCalendar = () => {
           </div>
         </div>
         <div className="fresha-toolbar-center">
-          <div className="team-selector">
+          {/* <div className="team-selector">
             <span>Scheduled team</span>
             <span className="arrow-down">▼</span>
-          </div>
-          <button className="filter-btn">
+          </div> */}
+          <h1 className='font-bold text-2xl'>Appointments Calendar</h1>
+          {/* <button className="filter-btn">
             <span>≡</span>
-          </button>
+          </button> */}
         </div>
         <div className="fresha-toolbar-right">
           <button 
