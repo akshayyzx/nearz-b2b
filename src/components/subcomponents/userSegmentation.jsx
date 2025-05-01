@@ -12,16 +12,35 @@ export default function RFMSegmentsTreemap() {
   const treemapRef = useRef(null);
   
   const segments = [
-    { id: 1, name: "Champions", value: 13, displayValue: 7960, percent: "13%", color: "#2563EB", recency: 5, frequency: 4, monetary: 5, days: 145, gradientFrom: "#1E40AF", gradientTo: "#3B82F6" }, // blue gradient
-    { id: 2, name: "Loyal Customers", value: 14, displayValue: 8603, percent: "14%", color: "#10B981", recency: 3, frequency: 5, monetary: 4, days: 579, gradientFrom: "#047857", gradientTo: "#34D399" }, // emerald gradient
-    { id: 3, name: "Potential Loyalist", value: 7, displayValue: 4569, percent: "7%", color: "#6366F1", recency: 4, frequency: 3, monetary: 3, days: 399, gradientFrom: "#4338CA", gradientTo: "#818CF8" }, // indigo gradient
-    { id: 4, name: "New Customers", value: 4, displayValue: 2672, percent: "4%", color: "#06B6D4", recency: 5, frequency: 1, monetary: 1, days: 279, gradientFrom: "#0891B2", gradientTo: "#22D3EE" }, // cyan gradient
-    { id: 5, name: "Promising", value: 30, displayValue: 4546, percent: "30%", color: "#F59E0B", recency: 4, frequency: 1, monetary: 1, days: 507, gradientFrom: "#B45309", gradientTo: "#FBBF24" }, // amber gradient
-    { id: 6, name: "Need Attention", value: 14, displayValue: 8741, percent: "14%", color: "#F97316", recency: 3, frequency: 2, monetary: 2, days: 683, gradientFrom: "#C2410C", gradientTo: "#FB923C" }, // orange gradient
-    { id: 7, name: "About to Sleep", value: 1, displayValue: 480, percent: "1%", color: "#EF4444", recency: 3, frequency: 1, monetary: 3, days: 679, gradientFrom: "#B91C1C", gradientTo: "#F87171" }, // red gradient
-    { id: 8, name: "Can't lose them", value: 2, displayValue: 954, percent: "2%", color: "#8B5CF6", recency: 1, frequency: 5, monetary: 5, days: 826, gradientFrom: "#6D28D9", gradientTo: "#A78BFA" }, // purple gradient
-    { id: 9, name: "At Risk", value: 8, displayValue: 4954, percent: "8%", color: "#DB2777", recency: 1, frequency: 4, monetary: 3, days: 881, gradientFrom: "#9D174D", gradientTo: "#EC4899" }, // pink gradient
-    { id: 10, name: "Hibernating", value: 7, displayValue: 19053, percent: "7%", color: "#64748B", recency: 1, frequency: 2, monetary: 2, days: 928, gradientFrom: "#475569", gradientTo: "#94A3B8" }, // slate gradient
+    { id: 1, name: "Champions", value: 13, displayValue: 7960, percent: "13%", color: "#2563EB", recency: 5, frequency: 4, monetary: 5, days: 145, gradientFrom: "#1E40AF", gradientTo: "#3B82F6", 
+      description: "High-value customers who purchased recently and frequently. They are your most enthusiastic advocates and spend the most." },
+    
+    { id: 2, name: "Loyal Customers", value: 14, displayValue: 8603, percent: "14%", color: "#10B981", recency: 3, frequency: 5, monetary: 4, days: 579, gradientFrom: "#047857", gradientTo: "#34D399", 
+      description: "Customers who shop frequently and spend more than average, but haven't purchased very recently. Consistent supporters of your business." },
+    
+    { id: 3, name: "Potential Loyalist", value: 7, displayValue: 4569, percent: "7%", color: "#6366F1", recency: 4, frequency: 3, monetary: 3, days: 399, gradientFrom: "#4338CA", gradientTo: "#818CF8", 
+      description: "Recent customers with average frequency and spending. They show potential to become loyal customers with the right engagement." },
+    
+    { id: 4, name: "New Customers", value: 4, displayValue: 2672, percent: "4%", color: "#06B6D4", recency: 5, frequency: 1, monetary: 1, days: 279, gradientFrom: "#0891B2", gradientTo: "#22D3EE", 
+      description: "Customers who shopped very recently but have only made one purchase with low value. First-time buyers who need nurturing." },
+    
+    { id: 5, name: "Promising", value: 30, displayValue: 4546, percent: "30%", color: "#F59E0B", recency: 4, frequency: 1, monetary: 1, days: 507, gradientFrom: "#B45309", gradientTo: "#FBBF24", 
+      description: "Recent customers who have shopped only once but show potential. They need encouragement to return and increase spending." },
+    
+    { id: 6, name: "Need Attention", value: 14, displayValue: 8741, percent: "14%", color: "#F97316", recency: 3, frequency: 2, monetary: 2, days: 683, gradientFrom: "#C2410C", gradientTo: "#FB923C", 
+      description: "Customers with average recency, frequency, and monetary values. They're at risk of becoming dormant without targeted engagement." },
+    
+    { id: 7, name: "About to Sleep", value: 1, displayValue: 480, percent: "1%", color: "#EF4444", recency: 3, frequency: 1, monetary: 3, days: 679, gradientFrom: "#B91C1C", gradientTo: "#F87171", 
+      description: "Customers who purchased a while ago, spent a good amount, but haven't returned. They're slipping away and need re-engagement." },
+    
+    { id: 8, name: "Can't lose them", value: 2, displayValue: 954, percent: "2%", color: "#8B5CF6", recency: 1, frequency: 5, monetary: 5, days: 826, gradientFrom: "#6D28D9", gradientTo: "#A78BFA", 
+      description: "High-value, frequent shoppers who haven't purchased in a long time. Previous VIPs who need winning back with special offers." },
+    
+    { id: 9, name: "At Risk", value: 8, displayValue: 4954, percent: "8%", color: "#DB2777", recency: 1, frequency: 4, monetary: 3, days: 881, gradientFrom: "#9D174D", gradientTo: "#EC4899", 
+      description: "Customers who used to shop frequently with good spending but haven't returned in a long time. They need urgent re-engagement." },
+    
+    { id: 10, name: "Hibernating", value: 7, displayValue: 19053, percent: "7%", color: "#64748B", recency: 1, frequency: 2, monetary: 2, days: 928, gradientFrom: "#475569", gradientTo: "#94A3B8", 
+      description: "Customers who made few purchases, spent little, and haven't returned in a long time. They're likely to have churned." }
   ];
 
   const mockCustomerData = {
@@ -58,16 +77,16 @@ export default function RFMSegmentsTreemap() {
     ];
     
     // Array of common Indian cities for email domains
-    const cities = [
-      "delhi", "mumbai", "bangalore", "hyderabad", "chennai", 
-      "kolkata", "pune", "ahmedabad", "jaipur", "lucknow"
-    ];
+    // const cities = [
+    //   "delhi", "mumbai", "bangalore", "hyderabad", "chennai", 
+    //   "kolkata", "pune", "ahmedabad", "jaipur", "lucknow"
+    // ];
     
     // Array of common email domains in India
-    const emailDomains = [
-      "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", 
-      "rediffmail.com", "ymail.com"
-    ];
+    // const emailDomains = [
+    //   "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", 
+    //   "rediffmail.com", "ymail.com"
+    // ];
     
     // Array of salon/spa services
     const services = [
@@ -86,15 +105,31 @@ export default function RFMSegmentsTreemap() {
       const randomAlphaNum = Math.random().toString(36).substring(2, 8).toUpperCase();
       const id = `IN${new Date().getFullYear().toString().slice(-2)}${segment.substring(0, 2).toUpperCase()}${randomAlphaNum}`;
       
-      const revenue = Math.floor(Math.random() * 50000) + 10000;
+      const revenue = Math.floor(Math.random() * 500) + 1000;
       const orders = Math.floor(Math.random() * 15) + 1;
       const lastOrderDays = Math.floor(Math.random() * 300) + 10;
       
       // Generate email with first name and last name
-      const emailName = (firstName + lastName.charAt(0)).toLowerCase();
-      const emailCity = cities[Math.floor(Math.random() * cities.length)];
-      const emailDomain = emailDomains[Math.floor(Math.random() * emailDomains.length)];
-      const email = `${emailName}@${emailDomain}`;
+      const indianPhoneNumber = () => {
+        // Common Indian mobile prefixes (initial digits)
+        const mobilePrefixes = ['6', '7', '8', '9'];
+        
+        // Select a random prefix
+        const prefix = mobilePrefixes[Math.floor(Math.random() * mobilePrefixes.length)];
+        
+        // Generate the remaining 9 digits
+        const remainingDigits = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+        
+        // Format as a 10-digit number
+        const fullNumber = prefix + remainingDigits.substring(0, 9);
+        
+        // Format with spaces for readability: XXXXX XXXXX
+        return `${fullNumber.substring(0, 5)} ${fullNumber.substring(5, 10)}`;
+      };
+      
+      // You can still use firstName and lastName to influence the number if desired
+      // const userCityCode = cities[Math.floor(Math.random() * cities.length)];
+      const phone = indianPhoneNumber();
       
       const last5Orders = [];
       for (let j = 1; j <= 5; j++) {
@@ -128,7 +163,7 @@ export default function RFMSegmentsTreemap() {
       customers.push({
         id: id,
         name: fullName,
-        email: email,
+        phone: phone,
         orders,
         revenue,
         lastOrderDays,
@@ -204,14 +239,15 @@ export default function RFMSegmentsTreemap() {
       .on("mouseover", function(event, d) {
         // Show tooltip on hover
         tooltip
-          .html(`
-            <strong>${d.data.name}</strong><br/>
-            Customers: ${d.data.displayValue}<br/>
-            Percentage: ${d.data.percent}
-          `)
-          .style("visibility", "visible")
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
+        .html(`
+          <strong>${d.data.name}</strong><br/>
+          Customers: ${d.data.displayValue}<br/>
+          Percentage: ${d.data.percent}<br/>
+          <div style="max-width: 250px; white-space: normal; word-wrap: break-word;">Description: ${d.data.description}</div>
+        `)
+        .style("visibility", "visible")
+        .style("left", (event.pageX + 10) + "px")
+        .style("top", (event.pageY - 28) + "px");
         
         // Highlight the cell
         d3.select(this)
@@ -297,7 +333,7 @@ export default function RFMSegmentsTreemap() {
     
     return sortedData.filter(customer => 
       customer.name.toLowerCase().includes(filterValue.toLowerCase()) ||
-      customer.email.toLowerCase().includes(filterValue.toLowerCase()) ||
+      customer.phone.toLowerCase().includes(filterValue.toLowerCase()) ||
       customer.id.toLowerCase().includes(filterValue.toLowerCase())
     );
   }, [sortedData, filterValue]);
@@ -363,7 +399,7 @@ export default function RFMSegmentsTreemap() {
           <tr className="bg-gray-50 border-b">
             <th className="py-3 px-6 text-left font-medium text-xs text-gray-500 uppercase tracking-wider">
               <button className="flex items-center" onClick={() => handleSort('id')}>
-                Customer ID
+                Service ID
                 {sortConfig.key === 'id' && (
                   <span className="ml-1">
                     {sortConfig.direction === 'ascending' ? 
@@ -397,7 +433,7 @@ export default function RFMSegmentsTreemap() {
             </th>
             <th className="py-3 px-6 text-left font-medium text-xs text-gray-500 uppercase tracking-wider">
               <button className="flex items-center" onClick={() => handleSort('email')}>
-                Email
+                Phone
                 {sortConfig.key === 'email' && (
                   <span className="ml-1">
                     {sortConfig.direction === 'ascending' ? 
@@ -457,7 +493,7 @@ export default function RFMSegmentsTreemap() {
               >
                 <td className="py-4 px-6 text-sm text-gray-800">{customer.id}</td>
                 <td className="py-4 px-6 text-sm font-medium text-blue-600">{customer.name}</td>
-                <td className="py-4 px-6 text-sm text-gray-600">{customer.email}</td>
+                <td className="py-4 px-6 text-sm text-gray-600">{customer.phone}</td>
                 <td className="py-4 px-6 text-sm text-gray-600 text-right">₹{customer.revenue.toLocaleString()}</td>
                 <td className="py-4 px-6 text-sm text-gray-600 text-right">{customer.lastOrderDays} days</td>
               </tr>
@@ -486,7 +522,7 @@ export default function RFMSegmentsTreemap() {
                         <table className="min-w-full">
                           <thead>
                             <tr className="bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              <th className="py-3 px-6 text-left">Order ID</th>
+                              <th className="py-3 px-6 text-left">Service ID</th>
                               <th className="py-3 px-6 text-left">Date</th>
                               <th className="py-3 px-6 text-left">Service</th>
                               <th className="py-3 px-6 text-right">Amount</th>

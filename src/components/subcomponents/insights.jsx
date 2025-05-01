@@ -47,7 +47,7 @@ const SalonDashboard = () => {
       chart3: {
         labels: ['Haircut', 'Color', 'Style', 'Treatment'],
         data: [30, 20, 15, 10],
-        title: 'Weekly Service Distribution'
+        title: 'Weekly Service Category'
       },
       chart4: {
         labels: ['Online', 'Walk-in', 'Phone'],
@@ -89,7 +89,7 @@ const SalonDashboard = () => {
       chart3: {
         labels: ['Haircut', 'Color', 'Style', 'Treatment'],
         data: [120, 85, 65, 50],
-        title: 'Monthly Service Distribution'
+        title: 'Monthly Service Category'
       },
       chart4: {
         labels: ['Online', 'Walk-in', 'Phone'],
@@ -131,7 +131,7 @@ const SalonDashboard = () => {
       chart3: {
         labels: ['Haircut', 'Color', 'Style', 'Treatment'],
         data: [720, 510, 390, 300],
-        title: '6-Month Service Distribution'
+        title: '6-Month Service Category'
       },
       chart4: {
         labels: ['Online', 'Walk-in', 'Phone'],
@@ -566,7 +566,7 @@ const SalonDashboard = () => {
             </div>
           </div>
           
-          {/* Chart 3 - Service Distribution */}
+          {/* Chart 3 - Service Category */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="px-6 pt-5 pb-5">
               <div className="flex items-center justify-between mb-4">
@@ -587,14 +587,18 @@ const SalonDashboard = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart4.title}</h3>
               </div>
-              <div className="h-72 flex items-center justify-center">
-                <div className="w-64">
-                  <Pie 
-                    options={options} 
-                    data={createPieDataset(currentViewData.chart4, currentViewData.chart4.title)} 
-                  />
-                </div>
-              </div>
+              <div className="h-[300px] flex items-center justify-center py-6">
+                 <div className="w-[300px] max-w-md">
+                   <Pie
+                      options={{
+                        ...options,
+                        responsive: true,
+                        maintainAspectRatio: true
+                      }}
+                      data={createPieDataset(currentViewData.chart4, currentViewData.chart4.title)}
+                    />
+                 </div>
+               </div>
             </div>
           </div>
           
@@ -665,14 +669,18 @@ const SalonDashboard = () => {
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart8.title}</h3>
               </div>
-              <div className="h-72 flex items-center justify-center">
-                <div className="w-64">
-                  <Doughnut 
-                    options={options} 
-                    data={createPieDataset(currentViewData.chart8, currentViewData.chart8.title)} 
-                  />
-                </div>
-              </div>
+             <div className="h-[300px] flex items-center justify-center py-6">
+                 <div className="w-[300px] max-w-md">
+                   <Doughnut
+                      options={{
+                        ...options,
+                        responsive: true,
+                        maintainAspectRatio: true
+                      }}
+                      data={createPieDataset(currentViewData.chart8, currentViewData.chart8.title)}
+                    />
+                 </div>
+               </div>
             </div>
           </div>
         </div>

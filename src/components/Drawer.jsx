@@ -15,7 +15,7 @@ import React, { useState } from 'react';
 
 const Sidebar = ({ onSelectView, activeView }) => {
   return (
-    <aside className="w-16 bg-[#0A1B1F] flex flex-col items-center py-4 space-y-3 fixed top-16 left-0 h-screen z-30">
+    <aside className="w-16 bg-[#0A1B1F] flex flex-col items-center py-4 space-y-3 fixed top-16 left-0 h-screen z-30 mt-2">
       <SidebarIcon
         icon={<Home size={20} />}
         label="Home"

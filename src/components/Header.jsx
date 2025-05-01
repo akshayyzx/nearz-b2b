@@ -1,28 +1,83 @@
-import React from 'react';
-import { Bell, User } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Bell, User, LogOut, Menu, X, Search } from 'lucide-react';
+import HeaderLogo from '../assets/logo-biz2.png'
 
 export default function Header() {
-  return (
-    <header className="flex items-center justify-between px-4 py-3 bg-[#F25435] shadow-md sticky top-0 z-50">
-      {/* Logo + Title */}
-      <div className="flex items-center gap-2">
-        <img 
-          src="https://coruscating-kheer-a59585.netlify.app/static/media/logo.52c1adf0.svg" 
-          alt="logo" 
-          className="h-10 w-auto object-contain"
-        />
-        {/* <span className="text-lg font-semibold text-white">For Business</span> */}
-      </div>
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const modalRef = useRef(null);
 
-      {/* Icons */}
-      <div className="flex items-center gap-4">
-        <button className="text-white hover:text-gray-200 transition-colors">
-          <Bell size={22} />
-        </button>
-        <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center text-[#F25435] font-semibold cursor-pointer hover:bg-gray-100 transition">
-          <User size={20} />
+  // Close modal when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (modalRef.current && !modalRef.current.contains(event.target)) {
+        setShowLogoutModal(false);
+      }
+    }
+    
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleLogout = () => {
+    // Remove auth token from localStorage
+    localStorage.clear();
+    
+    // Close the modal
+    setShowLogoutModal(false);
+    
+    // Navigate to signup screen (using window.location instead of useNavigate)
+    window.location.href = '/signup';
+  };
+
+  return (
+    <div className="w-full">
+      {/* Main Header */}
+      <header className="flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+        {/* Logo + Title */}
+        <div className="flex items-center gap-3 h-9 -ml-8">
+          <img
+            src={HeaderLogo}
+            alt="logo"
+            className="h-18 w-auto object-contain"
+          />
+          {/* <span className="text-lg font-semibold text-gray-800 hidden md:block">For Business</span> */}
         </div>
-      </div>
-    </header>
+        {/* Icons */}
+        <div className="flex items-center gap-4">
+          <div 
+            className="relative"
+            ref={modalRef}
+          >
+<div
+  className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200"
+  onClick={() => setShowLogoutModal(!showLogoutModal)}
+>
+
+              <User size={20} />
+            </div>
+            
+            {/* Logout Modal */}
+            {showLogoutModal && (
+              <div className="absolute right-0 top-12 bg-white rounded-lg shadow-lg py-3 px-2 w-48 z-50 border border-gray-100">
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <p className="font-medium text-gray-800">John Doe</p>
+                  <p className="text-sm text-gray-500">john@example.com</p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-gray-700 hover:bg-gray-50 rounded transition-colors text-sm mt-1"
+                >
+                  <LogOut size={16} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+    </div>
   );
 }

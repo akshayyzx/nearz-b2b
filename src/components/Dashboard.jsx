@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import Sidebar from './Drawer.jsx';
 import CalendarView from './subcomponents/calendarView.jsx';
-import Insights from '../components/subcomponents/insights';
-import UserSegmentation from '../components/subcomponents/userSegmentation';
+import Insights from '../components/subcomponents/Insights';
+import UserSegmentation from '../components/subcomponents/UserSegmentation';
 import AppointmentsList from './subcomponents/Appointments.jsx';
 import GrowthMetrics from './subcomponents/GrowthMetrics.jsx'
 
@@ -37,7 +37,7 @@ const Dashboard = () => {
      
 
       {/* Sidebar + Content */}
-      <div className="flex flex-1">
+      <div className="flex flex-1 ">
         <Sidebar onSelectView={handleViewSelect} activeView={activeView} />
 
         {/* Main content */}

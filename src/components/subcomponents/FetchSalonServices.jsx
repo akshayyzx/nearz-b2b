@@ -295,6 +295,50 @@ const [phoneNumber, setPhoneNumber] = useState("");
             </div>
           </div>
         )}
+
+               {/* Time Range Slider Component */}
+               <div className="bg-white rounded-lg shadow-md p-6 mb-6 w-[600px]">
+  <h2 className="text-lg font-medium mb-5">Select Time Range</h2>
+  
+  {loadingSlots ? (
+    <div className="flex items-center justify-center p-4">
+      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+      <span className="ml-2 text-sm text-gray-600">Loading available times...</span>
+    </div>
+  ) : timeSlots.length === 0 ? (
+    <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md">
+      No time slots available for {moment(selectedDate).format("MMMM D, YYYY")}.
+    </div>
+  ) : (
+    <>
+      {/* Horizontal Scrollable Time Slots - Widened */}
+      <div className="flex overflow-x-auto space-x-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent w-[550px]">
+        {timeSlots.map((slot, index) => {
+          const isSelected = selectedSlot?.formattedTime === slot.from;
+          return (
+            <button
+              key={index}
+              onClick={() => handleSlotSelect(slot)}
+              className={`min-w-[90px] px-3 py-2 border text-sm rounded-md text-gray-800 font-medium
+                ${isSelected ? 'bg-green-50 border-green-500 text-green-600 font-semibold shadow-sm' : 'border-gray-300'}
+                transition-colors duration-150`}
+            >
+              {slot.from}
+            </button>
+          );
+        })}
+      </div>
+      
+      {/* Progress line (below slots) */}
+      <div className="relative h-2 bg-gray-200 rounded-full mx-2 my-4">
+        <div 
+          className="absolute top-0 left-0 h-2 bg-gray-500 rounded-full" 
+          style={{ width: `${((timeSlots.findIndex(slot => slot.from === selectedSlot?.formattedTime) + 1) / timeSlots.length) * 100}%` }}
+        ></div>
+      </div>
+    </>
+  )}
+</div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column: Calendar and Time Slots */}
@@ -347,38 +391,6 @@ const [phoneNumber, setPhoneNumber] = useState("");
                   </button>
                 ))}
               </div>
-            </div>
-            
-            {/* Time Slots */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
-              <h2 className="text-lg font-medium mb-4">Available Time Slots</h2>
-              {loadingSlots ? (
-                <div className="flex items-center justify-center p-4">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                  <span className="ml-2 text-sm">Loading slots...</span>
-                </div>
-              ) : timeSlots.length === 0 ? (
-                <div className="bg-yellow-50 text-yellow-800 p-3 text-sm rounded">
-                  No time slots available for {moment(selectedDate).format("MMMM D, YYYY")}.
-                </div>
-              ) : (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {timeSlots.map((slot, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSlotSelect(slot)}
-                      className={`
-                        p-2 text-xs border rounded text-center
-                        ${selectedSlot && selectedSlot.formattedTime === slot.from
-                          ? 'bg-green-100 border-green-500 text-green-800'
-                          : 'bg-white hover:bg-gray-50 border-gray-200'}
-                      `}
-                    >
-                      {slot.from}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
           

@@ -13,7 +13,7 @@ const ViewBill = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          `https://polar-dawn-37707.herokuapp.com/appointments/bill?ulid=${ulid}`
+          `https://shielded-scrubland-64985.herokuapp.com/appointments/bill?ulid=${ulid}`
         );
         const result = await response.json();
 
