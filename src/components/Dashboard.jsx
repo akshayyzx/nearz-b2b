@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './Drawer.jsx';
 import CalendarView from './subcomponents/calendarView.jsx';
 import Insights from '../components/subcomponents/insights';
-import UserSegmentation from '../components/subcomponents/UserSegmentation';
+import UserSegmentation from '../components/subcomponents/userSegmentation';
 import AppointmentsList from './subcomponents/Appointments.jsx';
 import GrowthMetrics from './subcomponents/GrowthMetrics.jsx'
 
