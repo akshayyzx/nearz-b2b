@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, User, LogOut, Menu, X, Search } from 'lucide-react';
-import HeaderLogo from '../assets/logo-biz2.png'
+import HeaderLogo from '../assets/download.jpg'
 
 export default function Header() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  // const [showMobileMenu, setShowMobileMenu] = useState(false);
   const modalRef = useRef(null);
 
   // Close modal when clicking outside
@@ -35,11 +35,11 @@ export default function Header() {
   return (
     <div className="w-full">
       {/* Main Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white shadow-sm sticky top-0 z-50 transition-all duration-300">
+      <header className="flex items-center justify-between px-6 py-4 bg-[#F25435] shadow-sm sticky top-0 z-50 transition-all duration-300">
         {/* Logo + Title */}
-        <div className="flex items-center gap-3 h-9 -ml-8">
+        <div className="flex items-center gap-3 h-9">
           <img
-            src={HeaderLogo}
+            src="	https://super-naiad-0ea617.netlify.app/static/media/logo.52c1adf0.svg"
             alt="logo"
             className="h-18 w-auto object-contain"
           />

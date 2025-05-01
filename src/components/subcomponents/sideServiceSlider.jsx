@@ -3,9 +3,18 @@ import React, { useState } from 'react';
 import moment from 'moment';
 import FetchSalonService from './FetchSalonServices';
 
-const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteEvent }) => {
+const Sidebar = ({
+  isOpen,
+  onClose,
+  selectedSlot,
+  addEvent,
+  updateEvent,
+  deleteEvent,
+  loadEvents, // ✅ Accept loadEvents from parent
+}) => {
   const handleAddServiceEvent = (title, start, end, metadata) => {
     addEvent(title, start, end, metadata);
+    loadEvents(); // ✅ Call parent-provided loadEvents after adding
   };
 
   return (
@@ -16,7 +25,7 @@ const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteE
         <h2 className="text-lg font-semibold text-white">
           {selectedSlot?.isEvent ? 'Edit Appointment' : 'Add Appointment'}
         </h2>
-        <button 
+        <button
           onClick={onClose}
           className="p-2 rounded-full hover:bg-[#F25435]/20 text-white"
         >
@@ -27,15 +36,17 @@ const Sidebar = ({ isOpen, onClose, selectedSlot, addEvent, updateEvent, deleteE
       {selectedSlot && (
         <div className="p-4">
           {selectedSlot.isEvent ? (
-            <EventDetails 
-              event={selectedSlot} 
-              updateEvent={updateEvent} 
-              deleteEvent={deleteEvent} 
+            <EventDetails
+              event={selectedSlot}
+              updateEvent={updateEvent}
+              deleteEvent={deleteEvent}
             />
           ) : (
-            <FetchSalonService 
-              addEvent={handleAddServiceEvent} 
-              selectedSlot={selectedSlot} 
+            <FetchSalonService
+              addEvent={handleAddServiceEvent}
+              selectedSlot={selectedSlot}
+              onClose={onClose}
+              loadEvents={loadEvents}
             />
           )}
         </div>
@@ -74,13 +85,13 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
             className="w-full p-2 border border-gray-300 rounded mb-2 focus:ring-2 focus:ring-[#F25435]/50 focus:border-[#F25435]"
           />
           <div className="flex gap-2">
-            <button 
+            <button
               onClick={handleUpdate}
               className="bg-[#F25435] hover:bg-[#DD4F2E] text-white px-4 py-2 rounded flex-1"
             >
               Save
             </button>
-            <button 
+            <button
               onClick={() => setIsEditing(false)}
               className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded flex-1"
             >
@@ -107,7 +118,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
                 <p className="text-sm"><span className="font-medium">Gender:</span> {event.metadata.gender}</p>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowPopup(true)}
                 className="mt-4 bg-[#F25435] hover:bg-[#DD4F2E] text-white px-4 py-2 rounded w-full transition"
               >
@@ -164,13 +175,13 @@ const EventDetails = ({ event, updateEvent, deleteEvent }) => {
           )}
 
           <div className="mt-6 flex gap-2">
-            <button 
+            <button
               onClick={() => setIsEditing(true)}
               className="bg-[#023E8A] hover:bg-[#023E8A]/80 text-white px-4 py-2 rounded flex-1"
             >
               Edit
             </button>
-            <button 
+            <button
               onClick={handleDelete}
               className="bg-[#F25435] hover:bg-[#DD4F2E] text-white px-4 py-2 rounded flex-1"
             >

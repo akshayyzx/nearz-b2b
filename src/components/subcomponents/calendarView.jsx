@@ -29,8 +29,7 @@ const MyCalendar = () => {
 
     return new Date(year, month - 1, day, hours, minutes);
   };
-
-  const loadEvents = useCallback(async () => {
+const loadEvents= useCallback(async () => {
     try {
       setIsLoadingEvents(true);
       const appointments = await fetchAppointments();
@@ -103,8 +102,8 @@ const MyCalendar = () => {
 
   const addEvent = async (title, start, end, metadata) => {
     if (selectedSlot && title) {
-      setSidebarOpen(false);
-      await loadEvents(); // Refresh events after add
+  
+       loadEvents(); // Refresh events after add
     }
   };
 
@@ -293,6 +292,7 @@ const MyCalendar = () => {
         addEvent={addEvent}
         updateEvent={updateEvent}
         deleteEvent={deleteEvent}
+        loadEvents={loadEvents} 
       />
     </div>
   );

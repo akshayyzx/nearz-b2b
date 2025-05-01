@@ -3,7 +3,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
 import { 
-  Search, Users, User, UserPlus, Clock, DollarSign, Activity
+  Search, Users, User, UserPlus, Clock, DollarSign, Activity,IndianRupee
 } from 'lucide-react';
 
 import TopCategories from '../../utils/topCategories.jsx';
@@ -117,12 +117,12 @@ export default function SalonDashboard() {
        {/* Grid layout for all insight cards - 4 cards per row */}
 <div className="grid grid-cols-4 gap-4 mb-6">
 <InsightCard 
-    icon={<DollarSign size={20} />} 
-    title="Total Income" 
-    value="₹ 89,648" 
-    change="2.3" 
-    increased={true} 
-  />
+  icon={<IndianRupee size={20} />} 
+  title="Total Income" 
+  value="₹ 89,648" 
+  change="2.3" 
+  increased={true} 
+/>
     <InsightCard 
     icon={<Users size={20} />} 
     title="Total Clients" 
@@ -171,7 +171,7 @@ export default function SalonDashboard() {
   />
   
   <InsightCard 
-    icon={<DollarSign size={20} />} 
+    icon={<IndianRupee size={20} />} 
     title="Average Bill" 
     value={`₹ ${customerInsightsData.averageBill.value}`} 
     change={customerInsightsData.averageBill.change} 

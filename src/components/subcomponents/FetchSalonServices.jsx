@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import salonApiService from "./FetchAppointmentSlots";
+import { fetchAppointments } from "./FetchAppointmentSlots";
 
-const SalonBookingApp = () => {
+const SalonBookingApp = ({onClose,loadEvents}) => {
   // Main state variables
   const [salonServices, setSalonServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -176,16 +177,16 @@ const [phoneNumber, setPhoneNumber] = useState("");
       alert("Please enter a valid name and 10-digit phone number.");
       return;
     }
-  
+    
     const formattedPhone = phoneNumber.startsWith("+91")
       ? phoneNumber
       : `+91${phoneNumber}`;
-  
-      const userData = {
-        username: userName.trim(),
-        mobile: "+91" + phoneNumber,
-      };
-  
+    
+    const userData = {
+      username: userName.trim(),
+      mobile: formattedPhone,
+    };
+    
     try {
       await salonApiService.makeAppointment(
         salonId,
@@ -195,12 +196,21 @@ const [phoneNumber, setPhoneNumber] = useState("");
         pendingAppointments,
         userData
       );
+      
       setPendingAppointments([]);
-      alert("Appointments booked successfully!");
+      
+      // Use a custom alert that calls fetchAppointments when dismissed
+      const alertResult = window.confirm("Appointments booked successfully!");
+      
+      // This code runs after they click OK on the alert
+       // Refresh the calendar data
+      onClose(); // Close the sidebar
+      
     } catch (error) {
       alert(error.message);
     }
   };
+  
   
 
   // Generate calendar date cells for date picker
@@ -401,18 +411,51 @@ const [phoneNumber, setPhoneNumber] = useState("");
               
               {/* Pending Appointments Section */}
               {pendingAppointments.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-medium">
-                      Selected Services ({pendingAppointments.length}) - Total Duration: {totalDuration} min
-                    </h3>
-                    <button
-                      onClick={handleConfirmAllAppointments}
-                      className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-                    >
-                      Confirm All
-                    </button>
-                  </div>
+  <div className="mb-4">
+    <div className="flex justify-between items-center mb-2">
+      <h3 className="text-sm font-medium">
+        Selected Services ({pendingAppointments.length}) – Total Duration: {totalDuration} min
+      </h3>
+      <button
+        onClick={async () => {
+          if (!userName || phoneNumber.length !== 10) {
+            alert("Please enter a valid name and 10-digit phone number.");
+            return;
+          }
+
+          const formattedPhone = phoneNumber.startsWith("+91")
+            ? phoneNumber
+            : `+91${phoneNumber}`;
+
+          const userData = {
+            username: userName.trim(),
+            mobile: formattedPhone,
+          };
+
+          try {
+            await salonApiService.makeAppointment(
+              salonId,
+              selectedSlot.start,
+              totalDuration,
+              selectedSlot,
+              pendingAppointments,
+              userData
+            );
+
+            setPendingAppointments([]);
+            alert("Appointments booked successfully!");
+
+            await loadEvents(); // ✅ Load new appointments immediately
+            onClose(); // ✅ Close the sidebar/modal
+          } catch (error) {
+            alert(error.message);
+          }
+        }}
+        className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+      >
+        Confirm All
+      </button>
+    </div>
                   
                   <ul className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200 mb-4">
                     {pendingAppointments.map((appointment) => (
