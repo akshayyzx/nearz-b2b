@@ -1,5 +1,5 @@
 // Sidebar.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import moment from 'moment';
 import FetchSalonService from './FetchSalonServices';
 import { confirmAppointment } from '../subcomponents/FetchAppointmentSlots';
@@ -13,6 +13,25 @@ const Sidebar = ({
   deleteEvent,
   loadEvents,
 }) => {
+  // Add debugging for selectedSlot and track previous slot for comparison
+  const [currentSlot, setCurrentSlot] = useState(null);
+  
+  // Use effect to update currentSlot whenever selectedSlot changes
+  useEffect(() => {
+    if (selectedSlot) {
+      console.log("Sidebar received selectedSlot:", selectedSlot);
+      // Update the current slot to match the selected slot
+      setCurrentSlot(selectedSlot);
+    }
+  }, [selectedSlot]); // Dependency array ensures this runs when selectedSlot changes
+
+  // Reset current slot when sidebar is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentSlot(null);
+    }
+  }, [isOpen]);
+
   const handleAddServiceEvent = (title, start, end, metadata) => {
     addEvent(title, start, end, metadata);
     loadEvents();
@@ -24,36 +43,53 @@ const Sidebar = ({
       overflow-y-auto rounded-l-lg`}>
       <div className="flex justify-between items-center p-4 border-b border-gray-200 bg-gradient-to-r from-[#F25435] to-[#DD4F2E]">
         <h2 className="text-lg font-semibold text-white">
-          {selectedSlot?.isEvent ? 'Edit Appointment' : 'Add Appointment'}
+          {currentSlot?.isEvent ? 'Edit Appointment' : 'Add Appointment'}
         </h2>
         <button
-          onClick={onClose}
+          onClick={() => {
+            // Reset currentSlot when closing
+            setCurrentSlot(null);
+            onClose();
+          }}
           className="p-2 rounded-full hover:bg-[#F25435]/20 text-white"
         >
           ✕
         </button>
       </div>
 
-      {selectedSlot && (
-        <div className="p-4">
-          {selectedSlot.isEvent ? (
-            <EventDetails
-              event={selectedSlot}
-              updateEvent={updateEvent}
-              deleteEvent={deleteEvent}
-              loadEvents={loadEvents}
-              onClose={onClose}
-            />
-          ) : (
-            <FetchSalonService
-              addEvent={handleAddServiceEvent}
-              selectedSlot={selectedSlot}
-              onClose={onClose}
-              loadEvents={loadEvents}
-            />
-          )}
-        </div>
-      )}
+      {/* Improved rendering logic with fallback message */}
+      <div className="p-4">
+        {!currentSlot && (
+          <div className="p-4 text-gray-500 text-center">
+            No appointment slot selected. Please select a time slot or appointment.
+          </div>
+        )}
+        
+        {currentSlot && currentSlot.isEvent && (
+          <EventDetails
+            event={currentSlot}
+            updateEvent={updateEvent}
+            deleteEvent={deleteEvent}
+            loadEvents={loadEvents}
+            onClose={() => {
+              setCurrentSlot(null);
+              onClose();
+            }}
+          />
+        )}
+        
+        {currentSlot && !currentSlot.isEvent && (
+          <FetchSalonService
+            addEvent={handleAddServiceEvent}
+            selectedSlot={currentSlot}
+            onClose={() => {
+              setCurrentSlot(null);
+              onClose();
+            }}
+            loadEvents={loadEvents}
+          />
+        )}
+      </div>
     </div>
   );
 };
@@ -62,23 +98,68 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
   // Always start in editing mode if we want to edit by default
   const [isEditing, setIsEditing] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
-  const [title, setTitle] = useState(event.title);
+  const [title, setTitle] = useState('');
+  const [serviceName, setServiceName] = useState('');
   const [isConfirming, setIsConfirming] = useState(false);
   const [confirmationStatus, setConfirmationStatus] = useState({
     success: null,
     message: ""
   });
   
-  // New state for editing time
-  const [startDate, setStartDate] = useState(moment(event.start).format('YYYY-MM-DD'));
-  const [startTime, setStartTime] = useState(moment(event.start).format('HH:mm'));
-  const [endTime, setEndTime] = useState(moment(event.end).format('HH:mm'));
-  const [serviceName, setServiceName] = useState(
-    event.metadata?.serviceName || event.metadata?.salon_services?.[0]?.service_name || ''
-  );
+  // Initialize state values from event prop
+  useEffect(() => {
+    if (event) {
+      console.log("EventDetails received event:", event);
+      setTitle(event.title || 'Untitled Appointment');
+      
+      // Safely access metadata
+      const metadata = event.metadata || {};
+      setServiceName(
+        metadata.serviceName || 
+        (metadata.salon_services && metadata.salon_services[0]?.service_name) || 
+        'Unknown Service'
+      );
+      
+      // Reset state for editing time with safe defaults from the event
+      const startDateTime = event.start ? moment(event.start) : moment();
+      const endDateTime = event.end ? moment(event.end) : moment().add(1, 'hour');
+      
+      setStartDate(startDateTime.format('YYYY-MM-DD'));
+      setStartTime(startDateTime.format('HH:mm'));
+      setEndTime(endDateTime.format('HH:mm'));
+    }
+  }, [event]); // This will re-run whenever a new event is provided
+  
+  // Safely handle event data with null checks
+  const startDateTime = event?.start ? moment(event.start) : moment();
+  const endDateTime = event?.end ? moment(event.end) : moment().add(1, 'hour');
+  
+  // New state for editing time with safe defaults
+  const [startDate, setStartDate] = useState(startDateTime.format('YYYY-MM-DD'));
+  const [startTime, setStartTime] = useState(startDateTime.format('HH:mm'));
+  const [endTime, setEndTime] = useState(endDateTime.format('HH:mm'));
+  
+  // Safely access metadata with fallbacks
+  const metadata = event?.metadata || {};
 
   // Check if appointment is already confirmed
-  const isAppointmentConfirmed = event.metadata?.status === "Confirmed";
+  const isAppointmentConfirmed = metadata?.status === "Confirmed";
+
+  // If event data is invalid, show an error message
+  if (!event || !event.id) {
+    return (
+      <div className="p-4 bg-red-50 text-red-600 rounded-lg border border-red-200">
+        <h3 className="font-medium mb-2">Error Loading Appointment</h3>
+        <p>The appointment data is missing or invalid. Please try selecting the appointment again.</p>
+        <button 
+          onClick={onClose}
+          className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
+        >
+          Close
+        </button>
+      </div>
+    );
+  }
 
   const handleUpdate = () => {
     // Create new start and end dates based on the edited values
@@ -87,23 +168,20 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
     
     // Update the metadata with the new service name
     const updatedMetadata = {
-      ...event.metadata,
+      ...metadata,
       serviceName: serviceName,
       // Also update any fields that should reflect the service name
-      salon_services: event.metadata?.salon_services ? 
-        event.metadata.salon_services.map(service => ({
+      salon_services: metadata?.salon_services ? 
+        metadata.salon_services.map(service => ({
           ...service,
           service_name: serviceName,
           custom_name: serviceName
         })) : 
-        event.metadata?.salon_services
+        metadata?.salon_services
     };
     
     // Call the update function with all the new values
     updateEvent(event.id, title, newStart, newEnd, updatedMetadata);
-    
-    // We can keep editing mode on to allow for multiple edits
-    // or switch to view mode with setIsEditing(false);
     
     // Show confirmation that changes were saved
     setConfirmationStatus({
@@ -126,7 +204,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
   };
 
   const handleConfirmAppointment = async () => {
-    if (!event.metadata || !event.metadata.id) {
+    if (!metadata || !metadata.id) {
       setConfirmationStatus({
         success: false,
         message: "Appointment ID not found. Cannot confirm appointment."
@@ -141,7 +219,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
         message: "Confirming appointment..."
       });
 
-      const appointmentId = event.metadata.id;
+      const appointmentId = metadata.id;
       console.log("Attempting to confirm appointment ID:", appointmentId);
       
       const result = await confirmAppointment(appointmentId);
@@ -149,7 +227,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
       
       // Update local appointment metadata with the updated data
       const updatedMetadata = { 
-        ...event.metadata, 
+        ...metadata, 
         status: "Confirmed",
         ...result.data // Merge in any new data from the API response
       };
@@ -167,7 +245,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
       localStorage.setItem('appointments', JSON.stringify(updatedAppointments));
       
       // Update the event with new metadata
-      updateEvent(event.id, event.title, null, null, updatedMetadata);
+      updateEvent(event.id, event.title, event.start, event.end, updatedMetadata);
       
       // Show success message
       setConfirmationStatus({
@@ -188,7 +266,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
     }
   };
 
-  const isServiceAppointment = event.metadata && (event.metadata.serviceId || event.metadata.salon_services);
+  const isServiceAppointment = metadata && (metadata.serviceId || metadata.salon_services);
   
   return (
     <div className="text-gray-800">
@@ -269,20 +347,20 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
         </div>
       )}
 
-{isServiceAppointment && (
+      {isServiceAppointment && (
         <div className="mt-3 p-4 bg-gradient-to-r from-[#023E8A]/5 to-[#023E8A]/10 rounded-lg border border-[#023E8A]/20">
           <div className="flex justify-between items-center">
             <h3 className="font-medium text-[#023E8A] mb-2">Appointment Details</h3>
           </div>
           
           <div className="space-y-2">
-            <p className="text-sm"><span className="font-medium">Customer:</span> {event.metadata.customerName}</p>
-            <p className="text-sm"><span className="font-medium">Service:</span> {serviceName}</p>
-            <p className="text-sm"><span className="font-medium">Category:</span> {event.metadata.category}</p>
-            <p className="text-sm"><span className="font-medium">Price:</span> ₹{event.metadata.price || event.metadata.amount}</p>
-            <p className="text-sm"><span className="font-medium">Duration:</span> {event.metadata.duration} min</p>
-            {event.metadata.gender && (
-              <p className="text-sm"><span className="font-medium">Gender:</span> {event.metadata.gender}</p>
+            <p className="text-sm"><span className="font-medium">Customer:</span> {metadata.customerName || 'N/A'}</p>
+            <p className="text-sm"><span className="font-medium">Service:</span> {serviceName || 'N/A'}</p>
+            <p className="text-sm"><span className="font-medium">Category:</span> {metadata.category || 'N/A'}</p>
+            <p className="text-sm"><span className="font-medium">Price:</span> ₹{metadata.price || metadata.amount || 'N/A'}</p>
+            <p className="text-sm"><span className="font-medium">Duration:</span> {metadata.duration || 'N/A'} min</p>
+            {metadata.gender && (
+              <p className="text-sm"><span className="font-medium">Gender:</span> {metadata.gender}</p>
             )}
             {isAppointmentConfirmed && (
               <p className="text-sm font-medium text-green-600">Status: Confirmed</p>
@@ -346,38 +424,38 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
                 </div>
                 
                 <div className="space-y-2">
-                  <p><strong>Appointment ID:</strong> {event.metadata.id}</p>
-                  <p><strong>Date:</strong> {event.metadata.date || startDate}</p>
-                  <p><strong>Time:</strong> {event.metadata.start_time || startTime} - {event.metadata.end_time || endTime}</p>
-                  <p><strong>Amount:</strong> ₹{event.metadata.amount || event.metadata.price}</p>
-                  {event.metadata.comment && (
-                    <p><strong>Comment:</strong> {event.metadata.comment}</p>
+                  <p><strong>Appointment ID:</strong> {metadata.id || 'N/A'}</p>
+                  <p><strong>Date:</strong> {metadata.date || startDate}</p>
+                  <p><strong>Time:</strong> {metadata.start_time || startTime} - {metadata.end_time || endTime}</p>
+                  <p><strong>Amount:</strong> ₹{metadata.amount || metadata.price || 'N/A'}</p>
+                  {metadata.comment && (
+                    <p><strong>Comment:</strong> {metadata.comment}</p>
                   )}
-                  <p><strong>Duration:</strong> {event.metadata.duration} mins</p>
+                  <p><strong>Duration:</strong> {metadata.duration || 'N/A'} mins</p>
                   {isAppointmentConfirmed && (
                     <p className="font-medium text-green-600">Status: Confirmed</p>
                   )}
 
-                  {event.metadata.salon && (
+                  {metadata.salon && (
                     <div className="pt-4 border-t">
                       <h4 className="font-medium text-[#023E8A] mb-1">Salon Info</h4>
-                      <p><strong>Name:</strong> {event.metadata.salon.name}</p>
-                      <p><strong>Address:</strong> {event.metadata.salon.full_address}</p>
-                      <p><strong>Type:</strong> {event.metadata.salon.salon_type}</p>
-                      <p><strong>Seats:</strong> {event.metadata.salon.seats}</p>
-                      <p><strong>Contact No:</strong> {event.metadata.salon.user?.mobile}</p>
+                      <p><strong>Name:</strong> {metadata.salon.name || 'N/A'}</p>
+                      <p><strong>Address:</strong> {metadata.salon.full_address || 'N/A'}</p>
+                      <p><strong>Type:</strong> {metadata.salon.salon_type || 'N/A'}</p>
+                      <p><strong>Seats:</strong> {metadata.salon.seats || 'N/A'}</p>
+                      <p><strong>Contact No:</strong> {metadata.salon.user?.mobile || 'N/A'}</p>
                     </div>
                   )}
 
-                  {event.metadata.salon_services?.length > 0 && (
+                  {metadata.salon_services?.length > 0 && (
                     <div className="pt-4 border-t">
                       <h4 className="font-medium text-[#023E8A] mb-1">Service Info</h4>
-                      {event.metadata.salon_services.map(service => (
-                        <div key={service.id} className="mb-2">
-                          <p><strong>Name:</strong> {service.service_name}</p>
-                          <p><strong>Custom Name:</strong> {service.custom_name}</p>
-                          <p><strong>Category:</strong> {service.category_name}</p>
-                          <p><strong>Amount:</strong> ₹{service.amount}</p>
+                      {metadata.salon_services.map((service, index) => (
+                        <div key={service.id || index} className="mb-2">
+                          <p><strong>Name:</strong> {service.service_name || 'N/A'}</p>
+                          <p><strong>Custom Name:</strong> {service.custom_name || 'N/A'}</p>
+                          <p><strong>Category:</strong> {service.category_name || 'N/A'}</p>
+                          <p><strong>Amount:</strong> ₹{service.amount || 'N/A'}</p>
                         </div>
                       ))}
                     </div>
@@ -435,4 +513,4 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
   );
 };
 
-export default Sidebar
+export default Sidebar;

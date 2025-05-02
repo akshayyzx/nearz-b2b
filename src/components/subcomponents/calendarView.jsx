@@ -260,7 +260,7 @@ const loadEvents= useCallback(async () => {
   }
 
   return (
-    <div className="fresha-calendar-container rounded-xl mt-2">
+    <div className="fresha-calendar-container rounded-xl mt-5">
       <DnDCalendar
         localizer={localizer}
         events={eventList}
