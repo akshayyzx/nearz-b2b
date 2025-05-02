@@ -55,7 +55,7 @@ export default function SalonFunnel() {
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-800">Salon Booking Funnel</h2>
-        <span className="text-sm text-gray-500">April 2025</span>
+        <span className="text-sm text-gray-500">May 2025</span>
       </div>
 
       {/* Stat Summary */}

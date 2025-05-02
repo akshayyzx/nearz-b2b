@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
-// 1. Mock data
+// Mock category data
 const mockData = {
   'All time': [
     { name: 'Hair Services', value: 18, color: '#60A5FA' },
@@ -29,22 +29,24 @@ const mockData = {
 export default function TopCategories() {
   const [timeFilter, setTimeFilter] = useState("All time");
   const data = mockData[timeFilter];
-  
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <div className="mb-8">
       <div className="bg-white p-6 rounded-lg shadow-sm">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-800">Top categories</h2>
           <div className="flex space-x-2">
             {['All time', 'Weekly', 'Monthly'].map((filter) => (
               <button
                 key={filter}
-                className={`px-4 py-1 text-sm rounded-lg ${
+                className={`px-4 py-1 text-sm rounded-lg transition ${
                   timeFilter === filter
                     ? filter === 'Monthly'
                       ? 'bg-blue-600 text-white'
                       : 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-600'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
                 onClick={() => setTimeFilter(filter)}
               >
@@ -53,10 +55,12 @@ export default function TopCategories() {
             ))}
           </div>
         </div>
-        
-        <div className="flex flex-col md:flex-row h-80">
-          <div className="w-full md:w-2/3 h-full flex items-center justify-center">
-            <ResponsiveContainer width="120%" height={300}>
+
+        {/* Chart and Legend */}
+        <div className="flex flex-col md:flex-row md:space-x-8">
+          {/* Pie Chart */}
+          <div className="flex-1 flex items-center justify-center mb-6 md:mb-0">
+            <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
                   data={data}
@@ -66,6 +70,7 @@ export default function TopCategories() {
                   outerRadius={110}
                   paddingAngle={2}
                   dataKey="value"
+                  labelLine={false}
                 >
                   {data.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
@@ -76,30 +81,32 @@ export default function TopCategories() {
                   y="50%"
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  className="text-2xl font-bold"
+                  fontSize="20"
+                  fontWeight="bold"
                 >
-                  {data.reduce((sum, item) => sum + item.value, 0)}%
+                  {total}%
                 </text>
               </PieChart>
             </ResponsiveContainer>
           </div>
-          
-          <div className="w-full md:w-2/3 pl-0 md:pl-8 flex items-center">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 w-full">
-              {data.map((item, index) => (
-                <div key={index} className="flex items-center">
-                  <div
-                    className="w-4 h-4 rounded-full mr-3"
-                    style={{ backgroundColor: item.color }}
-                  ></div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-gray-800">{item.name}</span>
-                    <span className="text-sm text-gray-500">{item.value}%</span>
-                  </div>
-                </div>
-              ))}
+
+          {/* Legend */}
+      <div className="flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full -ml-5 mt-18">
+          {data.map((item, index) => (
+            <div key={index} className="flex items-center p-2 hover:bg-gray-50 rounded-md transition-colors">
+              <div
+                className="w-4 h-4 rounded-full mr-3 flex-shrink-0"
+                style={{ backgroundColor: item.color }}
+              ></div>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-800">{item.name}</span>
+                <span className="text-sm text-gray-500">{item.value}%</span>
+              </div>
             </div>
-          </div>
+          ))}
+      </div>
+    </div>
         </div>
       </div>
     </div>

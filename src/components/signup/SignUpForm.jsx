@@ -16,6 +16,13 @@ const SignUpForm = ({ onSignupSuccess }) => {
 
     try {
       const result = await SignUpFormApi(normalizedPhone, referralCode, name);
+      
+      // Store the user's name in localStorage
+      localStorage.setItem("userName", name);
+      
+      // Also store the phone number for reference
+      // localStorage.setItem("userPhone", normalizedPhone);
+      
       onSignupSuccess(normalizedPhone);
       alert("Signup successful!");
     } catch (error) {
@@ -28,15 +35,13 @@ const SignUpForm = ({ onSignupSuccess }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 h-screen">
       <div className="h-screen w-full">
-  <img
-    src={signupview}
-    alt="Signup Visual"
-    className="w-full h-full object-cover"
-  />
-</div>
-      {/* Left Side - Signup Image */}
-
-
+        <img
+          src={signupview}
+          alt="Signup Visual"
+          className="w-full h-full object-cover"
+        />
+      </div>
+      
       {/* Right Side - Signup Form */}
       <div className="flex items-center justify-center bg-gray-100 p-6">
         <form

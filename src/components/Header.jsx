@@ -1,11 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Bell, User, LogOut, Menu, X, Search } from 'lucide-react';
-import HeaderLogo from '../assets/download.jpg'
 
 export default function Header() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  // const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [userName, setUserName] = useState('User');
   const modalRef = useRef(null);
+  
+  // Get username from localStorage on component mount
+  useEffect(() => {
+    const storedUserName = localStorage.getItem('userName');
+    if (storedUserName) {
+      setUserName(storedUserName);
+    }
+  }, []);
 
   // Close modal when clicking outside
   useEffect(() => {
@@ -39,32 +46,29 @@ export default function Header() {
         {/* Logo + Title */}
         <div className="flex items-center gap-3 h-9">
           <img
-            src="	https://super-naiad-0ea617.netlify.app/static/media/logo.52c1adf0.svg"
+            src="https://super-naiad-0ea617.netlify.app/static/media/logo.52c1adf0.svg"
             alt="logo"
             className="h-18 w-auto object-contain"
           />
-          {/* <span className="text-lg font-semibold text-gray-800 hidden md:block">For Business</span> */}
         </div>
         {/* Icons */}
         <div className="flex items-center gap-4">
-          <div 
+          <div
             className="relative"
             ref={modalRef}
           >
-<div
-  className="w-10 h-10 rounded-full bg-orange-500 hover:bg-orange-600 text-white font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200"
+      <div 
+  className="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-800 text-white font-semibold flex items-center justify-center cursor-pointer transition-colors duration-200 shadow-sm"
   onClick={() => setShowLogoutModal(!showLogoutModal)}
 >
-
-              <User size={20} />
-            </div>
+  <User size={20} />
+</div>
             
             {/* Logout Modal */}
             {showLogoutModal && (
               <div className="absolute right-0 top-12 bg-white rounded-lg shadow-lg py-3 px-2 w-48 z-50 border border-gray-100">
                 <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="font-medium text-gray-800">John Doe</p>
-                  <p className="text-sm text-gray-500">john@example.com</p>
+                  <p className="font-medium text-gray-800">{userName}</p>
                 </div>
                 <button
                   onClick={handleLogout}

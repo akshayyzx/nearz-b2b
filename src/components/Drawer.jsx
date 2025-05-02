@@ -31,7 +31,7 @@ const Sidebar = ({ onSelectView, activeView }) => {
         showTooltip={true}
       />
       <SidebarIcon
-        icon={<Smile size={20} />}
+        icon={<Users size={20} />}
         label="Client"
         active={activeView === 'client'}
         onClick={() => onSelectView('client')}
@@ -52,11 +52,8 @@ const Sidebar = ({ onSelectView, activeView }) => {
         showTooltip={true}
       />
       <SidebarIcon 
-        icon={<Settings size={20} />}
-        label="Settings"
-        active={activeView === 'settings'}
-        onClick={() => onSelectView('settings')}
-        showTooltip={true}
+        icon={<Settings size={20} className="opacity-40" />}
+        showTooltip={false}
       />
       
       {/* Other sidebar icons with opacity 40% and no tooltips */}
@@ -73,7 +70,7 @@ const Sidebar = ({ onSelectView, activeView }) => {
         showTooltip={false}
       />
       <SidebarIcon 
-        icon={<Users size={20} className="opacity-40" />} 
+        icon={<Smile size={20} className="opacity-40" />} 
         showTooltip={false}
       />
       <SidebarIcon 

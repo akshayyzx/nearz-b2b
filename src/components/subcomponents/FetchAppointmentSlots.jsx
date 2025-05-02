@@ -244,11 +244,38 @@ export const makeAppointment = async (
   }
 };
   
+export const confirmAppointment = async (appointmentId) => {
+  try {
+    const token = getAuthToken();
+    
+    const response = await axios.put(
+      `${API_BASE_URL}/appointments/${appointmentId}/confirm`,
+      {},  // Empty body as we're just sending a PUT request
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Error confirming appointment:", error);
+    throw new Error(
+      error.response?.data?.message ||
+        "Failed to confirm appointment. Please try again."
+    );
+  }
+};
   
 export default {
   fetchSalonData,
   fetchTimeSlots,
   checkAvailability,
   createAppointment,
-  makeAppointment, fetchAppointments ,generateBill,
+  makeAppointment,
+  fetchAppointments,
+  generateBill,
+  confirmAppointment,  // Add the new function to the export
 };
