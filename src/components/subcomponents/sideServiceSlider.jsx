@@ -411,8 +411,8 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose }) 
           </div>
 
           {showPopup && (
-            <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-lg shadow-xl w-[90vw] max-w-3xl relative max-h-[90vh] overflow-y-auto">
+   <div className="fixed inset-0  flex items-center justify-center z-50 mt-80">
+  <div className="bg-white p-6 rounded-lg shadow-xl w-[40vw] max-w-2xl relative max-h-[120vh] overflow-y-auto">
                 <button
                   onClick={() => setShowPopup(false)}
                   className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
