@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -13,6 +13,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
+import { Calendar, TrendingUp, Users, CreditCard, Clock, Award, List, PieChart } from 'lucide-react';
 
 // Register ChartJS components
 ChartJS.register(
@@ -30,133 +31,363 @@ ChartJS.register(
 
 const SalonDashboard = () => {
   const [viewType, setViewType] = useState('monthly');
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [customDateActive, setCustomDateActive] = useState(false);
+  const [customData, setCustomData] = useState(null);
+  
+  // Format date for display
+  const formatDateForDisplay = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Reset custom date selection
+  const resetCustomDate = () => {
+    setStartDate('');
+    setEndDate('');
+    setCustomDateActive(false);
+    setCustomData(null);
+    setIsCustomDateOpen(false);
+    // When resetting, make sure we restore the previous view type
+    setViewType('monthly'); // Or whatever default you prefer
+  };
+
+  // Apply custom date filter
+  const applyCustomDateFilter = () => {
+    if (startDate && endDate) {
+      // Make sure we create the custom data before setting customDateActive
+      const newCustomData = generateCustomData(startDate, endDate);
+      setCustomData(newCustomData);
+      setCustomDateActive(true);
+      setIsCustomDateOpen(false);
+    }
+  };
+
+  // Generate synthetic data based on date range for demo purposes
+  const generateCustomData = (start, end) => {
+    const startDateTime = new Date(start).getTime();
+    const endDateTime = new Date(end).getTime();
+    const daysDiff = Math.ceil((endDateTime - startDateTime) / (1000 * 60 * 60 * 24)) + 1;
+    
+    // Generate date labels
+    const labels = [];
+    const currentDate = new Date(start);
+    for (let i = 0; i < daysDiff; i++) {
+      labels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // Generate synthetic data
+    const baseRevenue = 2500; // Base revenue per day
+    const revenueData = Array.from({ length: daysDiff }, () => 
+      Math.floor(baseRevenue + Math.random() * 1500)
+    );
+    
+    const appointmentsData = revenueData.map(rev => 
+      Math.floor(rev / 200 + Math.random() * 5)
+    );
+    
+    // Calculate totals for summary metrics
+    const totalRevenue = revenueData.reduce((acc, val) => acc + val, 0);
+    const totalAppointments = appointmentsData.reduce((acc, val) => acc + val, 0);
+    
+    return {
+      revenueChart: {
+        labels: labels,
+        data: revenueData,
+        title: 'Custom Date Range Revenue'
+      },
+      appointmentsChart: {
+        labels: labels,
+        data: appointmentsData,
+        title: 'Custom Date Range Appointments'
+      },
+      peakHoursChart: {
+        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm', '7-9pm'],
+        data: [
+          Math.floor(totalAppointments * 0.15),
+          Math.floor(totalAppointments * 0.2),
+          Math.floor(totalAppointments * 0.15),
+          Math.floor(totalAppointments * 0.2),
+          Math.floor(totalAppointments * 0.2),
+          Math.floor(totalAppointments * 0.1)
+        ],
+        title: 'Peak Hours'
+      },
+      revenueDaysChart: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: [
+          Math.floor(totalRevenue * 0.1),
+          Math.floor(totalRevenue * 0.12),
+          Math.floor(totalRevenue * 0.13),
+          Math.floor(totalRevenue * 0.15),
+          Math.floor(totalRevenue * 0.18),
+          Math.floor(totalRevenue * 0.2),
+          Math.floor(totalRevenue * 0.12)
+        ],
+        title: 'Revenue by Day'
+      },
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [
+          Math.floor(totalRevenue * 0.3),
+          Math.floor(totalRevenue * 0.25),
+          Math.floor(totalRevenue * 0.15),
+          Math.floor(totalRevenue * 0.12),
+          Math.floor(totalRevenue * 0.1),
+          Math.floor(totalRevenue * 0.08)
+        ],
+        title: 'Revenue by Service Category'
+      },
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [
+          Math.floor(totalRevenue * 0.18),
+          Math.floor(totalRevenue * 0.15),
+          Math.floor(totalRevenue * 0.12),
+          Math.floor(totalRevenue * 0.1),
+          Math.floor(totalRevenue * 0.09),
+          Math.floor(totalRevenue * 0.08),
+          Math.floor(totalRevenue * 0.08),
+          Math.floor(totalRevenue * 0.08),
+          Math.floor(totalRevenue * 0.06),
+          Math.floor(totalRevenue * 0.06)
+        ],
+        title: 'Top 10 Revenue Generating Services'
+      },
+      customerTypeChart: {
+        labels: ['New', 'Returning'],
+        data: [
+          Math.floor(totalRevenue * 0.25),
+          Math.floor(totalRevenue * 0.75)
+        ],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [
+          Math.floor(totalRevenue * 0.65),
+          Math.floor(totalRevenue * 0.33),
+          Math.floor(totalRevenue * 0.02)
+        ],
+        title: 'Revenue by Gender'
+      }
+    };
+  };
   
   // Dummy data for different view types
   const chartData = {
+    daily: {
+      revenueChart: {
+        labels: ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm'],
+        data: [450, 650, 850, 1200, 950, 750, 850, 1100, 1300, 1150, 950, 750],
+        title: 'Daily Revenue'
+      },
+      appointmentsChart: {
+        labels: ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm'],
+        data: [2, 3, 4, 5, 4, 3, 4, 5, 6, 5, 4, 3],
+        title: 'Daily Appointments'
+      },
+      peakHoursChart: {
+        labels: ['9am', '10am', '11am', '12pm', '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', '8pm'],
+        data: [2, 3, 4, 5, 4, 3, 4, 5, 6, 5, 4, 3],
+        title: 'Peak Hours'
+      },
+      revenueDaysChart: {
+        labels: ['Today'],
+        data: [8300],
+        title: 'Revenue by Day'
+      },
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [3500, 2800, 1200, 1800, 1500, 900],
+        title: 'Revenue by Service Category'
+      },
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [1800, 1600, 1400, 1200, 1000, 900, 800, 700, 600, 500],
+        title: 'Top 10 Revenue Generating Services'
+      },
+      customerTypeChart: {
+        labels: ['New', 'Returning'],
+        data: [3500, 6800],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [6500, 3700, 200],
+        title: 'Revenue by Gender'
+      }
+    },
     weekly: {
-      chart1: {
+      revenueChart: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        data: [12, 19, 15, 17, 22, 30, 25],
+        data: [4200, 5100, 4800, 5700, 6900, 8500, 6800],
         title: 'Weekly Revenue'
       },
-      chart2: {
+      appointmentsChart: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        data: [5, 8, 12, 9, 15, 20, 18],
+        data: [20, 25, 22, 28, 35, 42, 33],
         title: 'Weekly Appointments'
       },
-      chart3: {
-        labels: ['Haircut', 'Color', 'Style', 'Treatment'],
-        data: [30, 20, 15, 10],
-        title: 'Weekly Service Category'
+      peakHoursChart: {
+        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm', '7-9pm'],
+        data: [15, 22, 18, 25, 30, 20],
+        title: 'Peak Hours'
       },
-      chart4: {
-        labels: ['Online', 'Walk-in', 'Phone'],
-        data: [45, 35, 20],
-        title: 'Weekly Booking Channels'
-      },
-      chart5: {
+      revenueDaysChart: {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        data: [2, 3, 1, 4, 2, 5, 3],
-        title: 'Weekly Cancellations'
+        data: [4200, 5100, 4800, 5700, 6900, 8500, 6800],
+        title: 'Revenue by Day'
       },
-      chart6: {
-        labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-        data: [12, 8, 15, 10],
-        title: 'Weekly Product Sales'
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [14500, 12800, 8200, 9800, 7500, 5200],
+        title: 'Revenue by Service Category'
       },
-      chart7: {
-        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm'],
-        data: [15, 20, 18, 22, 25],
-        title: 'Weekly Peak Hours'
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [8800, 7600, 6400, 5200, 5000, 4900, 4800, 4700, 4600, 4500],
+        title: 'Top 10 Revenue Generating Services'
       },
-      chart8: {
+      customerTypeChart: {
         labels: ['New', 'Returning'],
-        data: [30, 70],
-        title: 'Weekly Customer Type'
+        data: [12000, 30000],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [26000, 15000, 1000],
+        title: 'Revenue by Gender'
       }
     },
     monthly: {
-      chart1: {
+      revenueChart: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        data: [2500, 3000, 2800, 3200],
+        data: [25000, 28500, 27000, 31500],
         title: 'Monthly Revenue'
       },
-      chart2: {
+      appointmentsChart: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        data: [80, 95, 85, 100],
+        data: [120, 135, 128, 145],
         title: 'Monthly Appointments'
       },
-      chart3: {
-        labels: ['Haircut', 'Color', 'Style', 'Treatment'],
-        data: [120, 85, 65, 50],
-        title: 'Monthly Service Category'
+      peakHoursChart: {
+        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm', '7-9pm'],
+        data: [75, 105, 90, 125, 145, 85],
+        title: 'Peak Hours'
       },
-      chart4: {
-        labels: ['Online', 'Walk-in', 'Phone'],
-        data: [180, 120, 60],
-        title: 'Monthly Booking Channels'
+      revenueDaysChart: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: [16800, 18200, 19500, 20800, 25600, 30200, 24900],
+        title: 'Revenue by Day'
       },
-      chart5: {
-        labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-        data: [10, 15, 12, 18],
-        title: 'Monthly Cancellations'
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [55000, 48000, 32000, 38000, 28000, 22000],
+        title: 'Revenue by Service Category'
       },
-      chart6: {
-        labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-        data: [45, 35, 50, 40],
-        title: 'Monthly Product Sales'
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [32000, 29000, 25000, 22000, 19000, 18000, 17000, 16000, 15000, 14000],
+        title: 'Top 10 Revenue Generating Services'
       },
-      chart7: {
-        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm'],
-        data: [60, 85, 75, 90, 95],
-        title: 'Monthly Peak Hours'
-      },
-      chart8: {
+      customerTypeChart: {
         labels: ['New', 'Returning'],
-        data: [25, 75],
-        title: 'Monthly Customer Type'
+        data: [40000, 80000],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [80000, 38000, 2000],
+        title: 'Revenue by Gender'
       }
     },
     sixMonths: {
-      chart1: {
+      revenueChart: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        data: [15000, 18000, 16500, 19000, 20500, 22000],
-        title: '6-Month Revenue'
+        data: [110000, 125000, 118000, 132000, 145000, 155000],
+        title: 'Last 6 Months Revenue'
       },
-      chart2: {
+      appointmentsChart: {
         labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        data: [480, 530, 510, 560, 590, 620],
-        title: '6-Month Appointments'
+        data: [520, 580, 550, 610, 670, 720],
+        title: 'Last 6 Months Appointments'
       },
-      chart3: {
-        labels: ['Haircut', 'Color', 'Style', 'Treatment'],
-        data: [720, 510, 390, 300],
-        title: '6-Month Service Category'
+      peakHoursChart: {
+        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm', '7-9pm'],
+        data: [450, 580, 520, 650, 750, 450],
+        title: 'Peak Hours'
       },
-      chart4: {
-        labels: ['Online', 'Walk-in', 'Phone'],
-        data: [1100, 650, 350],
-        title: '6-Month Booking Channels'
+      revenueDaysChart: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: [102000, 108000, 115000, 125000, 155000, 175000, 143000],
+        title: 'Revenue by Day'
       },
-      chart5: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        data: [60, 55, 65, 58, 62, 70],
-        title: '6-Month Cancellations'
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [330000, 290000, 180000, 210000, 165000, 125000],
+        title: 'Revenue by Service Category'
       },
-      chart6: {
-        labels: ['Product A', 'Product B', 'Product C', 'Product D'],
-        data: [280, 230, 310, 260],
-        title: '6-Month Product Sales'
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [190000, 175000, 150000, 135000, 115000, 105000, 95000, 90000, 85000, 80000],
+        title: 'Top 10 Revenue Generating Services'
       },
-      chart7: {
-        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm'],
-        data: [350, 420, 380, 450, 500],
-        title: '6-Month Peak Hours'
-      },
-      chart8: {
+      customerTypeChart: {
         labels: ['New', 'Returning'],
-        data: [20, 80],
-        title: '6-Month Customer Type'
+        data: [250000, 550000],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [500000, 290000, 10000],
+        title: 'Revenue by Gender'
+      }
+    },
+    yearly: {
+      revenueChart: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        data: [110000, 125000, 118000, 132000, 145000, 155000, 160000, 152000, 148000, 158000, 168000, 180000],
+        title: 'Yearly Revenue'
+      },
+      appointmentsChart: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        data: [520, 580, 550, 610, 670, 720, 740, 710, 690, 730, 780, 830],
+        title: 'Yearly Appointments'
+      },
+      peakHoursChart: {
+        labels: ['9-11am', '11-1pm', '1-3pm', '3-5pm', '5-7pm', '7-9pm'],
+        data: [900, 1150, 1050, 1300, 1500, 950],
+        title: 'Peak Hours'
+      },
+      revenueDaysChart: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        data: [210000, 225000, 240000, 255000, 310000, 355000, 290000],
+        title: 'Revenue by Day'
+      },
+      serviceRevenueChart: {
+        labels: ['Haircut', 'Color', 'Styling', 'Treatment', 'Spa', 'Makeup'],
+        data: [650000, 580000, 360000, 420000, 330000, 250000],
+        title: 'Revenue by Service Category'
+      },
+      topServicesChart: {
+        labels: ['Premium Haircut', 'Full Color', 'Hair Treatment', 'Bridal Makeup', 'Manicure', 'Facial', 'Massage', 'Haircut', 'Pedicure', 'Styling'],
+        data: [380000, 350000, 300000, 270000, 230000, 210000, 190000, 180000, 170000, 160000],
+        title: 'Top 10 Revenue Generating Services'
+      },
+      customerTypeChart: {
+        labels: ['New', 'Returning'],
+        data: [500000, 1100000],
+        title: 'Revenue by Customer Type'
+      },
+      genderChart: {
+        labels: ['Female', 'Male', 'Other'],
+        data: [1000000, 580000, 20000],
+        title: 'Revenue by Gender'
       }
     }
   };
@@ -184,6 +415,14 @@ const SalonDashboard = () => {
     neutral: {
       backgroundColor: 'rgba(201, 203, 207, 0.2)',
       borderColor: 'rgba(201, 203, 207, 1)'
+    },
+    success: {
+      backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      borderColor: 'rgba(75, 192, 192, 1)'
+    },
+    purple: {
+      backgroundColor: 'rgba(153, 102, 255, 0.2)',
+      borderColor: 'rgba(153, 102, 255, 1)'
     },
     pieColors: [
       'rgba(101, 116, 205, 0.8)',
@@ -280,6 +519,25 @@ const SalonDashboard = () => {
       }
     }
   };
+
+  // Horizontal bar options
+  const horizontalBarOptions = {
+    ...options,
+    indexAxis: 'y',
+    scales: {
+      ...options.scales,
+      x: {
+        ...options.scales.x,
+        beginAtZero: true
+      }
+    },
+    plugins: {
+      ...options.plugins,
+      legend: {
+        display: false
+      }
+    }
+  };
   
   // Create datasets for each chart type
   const createLineDataset = (data, title, color) => {
@@ -347,434 +605,393 @@ const SalonDashboard = () => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   };
   
-  // Get current view's data
-  const currentViewData = chartData[viewType];
+  // Calculate average bill value
+  const calculateAvgBillValue = (revenue, billCount) => {
+    return revenue / billCount;
+  };
+  
+  // Get current view's data based on selection
+  const currentViewData = customDateActive && customData ? customData : chartData[viewType];
   
   // Calculate summary metrics
-  const totalRevenue = currentViewData.chart1.data.reduce((acc, val) => acc + val, 0);
-  const totalAppointments = currentViewData.chart2.data.reduce((acc, val) => acc + val, 0);
-  const topService = currentViewData.chart3.labels[
-    currentViewData.chart3.data.indexOf(Math.max(...currentViewData.chart3.data))
-  ];
-  const conversionRate = 85; // Dummy data
+  const totalRevenue = currentViewData.revenueChart.data.reduce((acc, val) => acc + val, 0);
+  const totalAppointments = currentViewData.appointmentsChart.data.reduce((acc, val) => acc + val, 0);
+  // Assume bill count is slightly less than appointments (some appointments might have multiple services in one bill)
+  const totalBillCount = Math.round(totalAppointments * 0.85);
+  const avgBillValue = calculateAvgBillValue(totalRevenue, totalBillCount);
+
+  // Today's date to set max date for datepicker
+  const today = new Date().toISOString().split('T')[0];
   
   return (
-    <div className="bg-gray-50 min-h-screen ml-10 mt-5 rounded-xl">
-      {/* Top navigation */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-800">Sales Analytics</h1>
+    <div className="bg-gray-50 min-h-screen p-6 w-[1400px] mt-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        {/* Dashboard Title */}
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800">
+          SALES DASHBOARD
+        </h1>
+        
+        {/* Time Period Filter */}
+        <div className="relative">
+          <div className="flex space-x-2">
+          <select
+  value={customDateActive ? "custom" : viewType}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value === "custom") {
+      setIsCustomDateOpen(true);
+    } else {
+      setViewType(value);
+      setCustomDateActive(false);
+      setCustomData(null);
+    }
+  }}
+  className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm min-w-40"
+>
+  <option value="daily">Daily</option>
+  <option value="weekly">Weekly</option>
+  <option value="monthly">Monthly</option>
+  <option value="sixMonths">Last 6 Months</option>
+  <option value="yearly">Yearly</option>
+  <option value="custom">Custom Date Range</option>
+</select>
+            
+            {customDateActive && (
+  <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6 inline-flex items-center">
+    <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
+    <span className="text-sm font-medium text-indigo-700">
+      {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
+    </span>
+  </div>
+)}
           </div>
-          <div className="flex items-center space-x-4">
-            <select
-              value={viewType}
-              onChange={(e) => setViewType(e.target.value)}
-              className="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="sixMonths">Last 6 Months</option>
-            </select>
-            <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out">
-              Export Data
+          
+          {/* Custom Date Range Popup */}
+          {isCustomDateOpen && (
+            <div className="absolute right-0 top-12 z-10 bg-white rounded-lg shadow-lg border border-gray-200 p-4 w-80">
+              <div className="mb-3">
+                <h3 className="text-lg font-medium text-gray-800 mb-2">Select Date Range</h3>
+                <p className="text-sm text-gray-500">Choose start and end dates to filter data</p>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      type="date"
+                      value={startDate}
+                      max={endDate || today}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="bg-white border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 w-full text-sm"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Calendar className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <input
+                        type="date"
+                        value={endDate}
+                        min={startDate}
+                        max={today}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="bg-white border border-gray-300 rounded-lg pl-10 pr-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 w-full text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-5 flex justify-end space-x-3">
+                  <button
+                    onClick={() => setIsCustomDateOpen(false)}
+                    className="bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={applyCustomDateFilter}
+                    disabled={!startDate || !endDate}
+                    className={`${
+                      !startDate || !endDate
+                        ? 'bg-indigo-300 cursor-not-allowed'
+                        : 'bg-indigo-600 hover:bg-indigo-700'
+                    } text-white font-medium py-2 px-4 rounded-lg text-sm`}
+                  >
+                    Apply Filter
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+  
+        {/* Date Range Display (when custom date is active) */}
+        {customDateActive && (
+          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6 inline-flex items-center">
+            <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
+            <span className="text-sm font-medium text-indigo-700">
+              {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
+            </span>
+          </div>
+        )}
+        
+        {/* KPI Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Total Revenue</p>
+                <h3 className="text-2xl font-bold text-gray-800">₹{formatNumber(totalRevenue)}</h3>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <CreditCard className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500 mr-1" />
+              <span className="text-xs font-medium text-emerald-500">+12.5% from previous period</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Total Appointments</p>
+                <h3 className="text-2xl font-bold text-gray-800">{formatNumber(totalAppointments)}</h3>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <Calendar className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500 mr-1" />
+              <span className="text-xs font-medium text-emerald-500">+8.3% from previous period</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Average Bill Value</p>
+                <h3 className="text-2xl font-bold text-gray-800">₹{formatNumber(Math.round(avgBillValue))}</h3>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <CreditCard className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500 mr-1" />
+              <span className="text-xs font-medium text-emerald-500">+5.2% from previous period</span>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500 mb-1">Active Customers</p>
+                <h3 className="text-2xl font-bold text-gray-800">{formatNumber(Math.round(totalAppointments * 0.75))}</h3>
+              </div>
+              <div className="bg-indigo-50 p-3 rounded-lg">
+                <Users className="h-6 w-6 text-indigo-500" />
+              </div>
+            </div>
+            <div className="mt-4 flex items-center">
+              <TrendingUp className="h-4 w-4 text-emerald-500 mr-1" />
+              <span className="text-xs font-medium text-emerald-500">+7.8% from previous period</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Main Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.revenueChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <TrendingUp className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-64">
+              <Line 
+                data={createLineDataset(currentViewData.revenueChart, 'Revenue', colors.primary)} 
+                options={options} 
+              />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.appointmentsChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <Calendar className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-64">
+              <Line 
+                data={createLineDataset(currentViewData.appointmentsChart, 'Appointments', colors.secondary)} 
+                options={options}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Secondary Charts Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.peakHoursChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <Clock className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-64">
+              <Line 
+                data={createBarDataset(currentViewData.peakHoursChart, 'Appointments', colors.accent)} 
+                options={options}
+              />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.revenueDaysChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <Calendar className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-64">
+              <Bar 
+                data={createBarDataset(currentViewData.revenueDaysChart, 'Revenue', colors.primary)} 
+                options={options}
+              />
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.serviceRevenueChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <PieChart className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-64">
+              <Pie 
+                data={createPieDataset(currentViewData.serviceRevenueChart, 'Revenue')} 
+                options={{
+                  ...options,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    ...options.plugins,
+                    legend: {
+                      position: 'right',
+                      labels: {
+                        boxWidth: 12,
+                        font: {
+                          size: 11
+                        }
+                      }
+                    }
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Additional Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-semibold text-gray-800">{currentViewData.topServicesChart.title}</h3>
+              <div className="bg-indigo-50 p-2 rounded-lg">
+                <Award className="h-5 w-5 text-indigo-500" />
+              </div>
+            </div>
+            <div className="h-96">
+              <Bar 
+                data={createBarDataset(currentViewData.topServicesChart, 'Revenue', colors.success)} 
+                options={horizontalBarOptions}
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-6">
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">{currentViewData.customerTypeChart.title}</h3>
+                <div className="bg-indigo-50 p-2 rounded-lg">
+                  <Users className="h-5 w-5 text-indigo-500" />
+                </div>
+              </div>
+              <div className="h-48">
+                <Doughnut 
+                  data={createPieDataset(currentViewData.customerTypeChart, 'Revenue')} 
+                  options={{
+                    ...options,
+                    cutout: '70%',
+                    plugins: {
+                      ...options.plugins,
+                      legend: {
+                        position: 'bottom'
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold text-gray-800">{currentViewData.genderChart.title}</h3>
+                <div className="bg-indigo-50 p-2 rounded-lg">
+                  <PieChart className="h-5 w-5 text-indigo-500" />
+                </div>
+              </div>
+              <div className="h-48">
+                <Doughnut 
+                  data={createPieDataset(currentViewData.genderChart, 'Revenue')} 
+                  options={{
+                    ...options,
+                    cutout: '70%',
+                    plugins: {
+                      ...options.plugins,
+                      legend: {
+                        position: 'bottom'
+                      }
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Footer Section */}
+        <div className="flex flex-col md:flex-row justify-between items-center text-sm text-gray-500 pt-6 border-t border-gray-200 mt-6">
+          <div className="mb-4 md:mb-0">
+            © 2025 Salon Management System. All rights reserved.
+          </div>
+          <div className="flex items-center space-x-2">
+            <button className="flex items-center bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+              <List className="h-4 w-4 mr-2" />
+              <span>Export Report</span>
+            </button>
+            <button className="flex items-center bg-indigo-600 rounded-lg px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">
+              <PieChart className="h-4 w-4 mr-2" />
+              <span>Analytics</span>
             </button>
           </div>
         </div>
       </div>
-      
-      <div className="container mx-auto px-6 py-8 w-[250%] max-w-[1400px]  rounded-lg">
-        {/* Page header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-          {/* <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-            <p className="mt-1 text-gray-500">Comprehensive insights into your salon's performance</p>
-          </div> */}
-          <div className="mt-4 md:mt-0">
-            <span className="inline-flex rounded-md shadow-sm">
-              <button className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
-                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-                Generate Report
-              </button>
-            </span>
-          </div>
-        </div>
-        
-        {/* KPI summary cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Revenue */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-indigo-100 rounded-full p-3">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M6 4H18M6 8H18M10 4C13 4 15 6 15 8C15 10 13 12 10 12H6L17 20" 
-        stroke="blue" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
-
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                    <dd>
-                      <div className="text-lg font-bold text-gray-900">₹{formatNumber(totalRevenue)}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 px-6 py-2">
-              <div className="text-sm text-green-600 font-medium">
-                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-                8.2% increase
-              </div>
-            </div>
-          </div>
-          
-          {/* Appointments */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-blue-100 rounded-full p-3">
-                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Total Appointments</dt>
-                    <dd>
-                      <div className="text-lg font-bold text-gray-900">{formatNumber(totalAppointments)}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 px-6 py-2">
-              <div className="text-sm text-green-600 font-medium">
-                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-                5.7% increase
-              </div>
-            </div>
-          </div>
-          
-          {/* Top Service */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-teal-100 rounded-full p-3">
-                  <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Top Service</dt>
-                    <dd>
-                      <div className="text-lg font-bold text-gray-900">{topService}</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 px-6 py-2">
-              <div className="text-sm text-gray-600 font-medium">
-                Most popular choice
-              </div>
-            </div>
-          </div>
-          
-          {/* Conversion Rate */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-purple-100 rounded-full p-3">
-                  <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                  </svg>
-                </div>
-                <div className="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt className="text-sm font-medium text-gray-500 truncate">Conversion Rate</dt>
-                    <dd>
-                      <div className="text-lg font-bold text-gray-900">{conversionRate}%</div>
-                    </dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-            <div className="bg-gray-50 px-6 py-2">
-              <div className="text-sm text-green-600 font-medium">
-                <svg className="inline-block w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                </svg>
-                3.2% increase
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Chart grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Chart 1 - Revenue */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart1.title}</h3>
-                <div className="flex items-center">
-                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-                    </svg>
-                    12.5%
-                  </div>
-                </div>
-              </div>
-              <div className="h-72">
-                <Line 
-                  options={options} 
-                  data={createLineDataset(currentViewData.chart1, currentViewData.chart1.title, colors.primary)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 2 - Appointments */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart2.title}</h3>
-                <div className="flex items-center">
-                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-                    </svg>
-                    8.3%
-                  </div>
-                </div>
-              </div>
-              <div className="h-72">
-                <Line 
-                  options={options} 
-                  data={createLineDataset(currentViewData.chart2, currentViewData.chart2.title, colors.secondary)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 3 - Service Category */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart3.title}</h3>
-              </div>
-              <div className="h-72">
-                <Bar 
-                  options={options} 
-                  data={createBarDataset(currentViewData.chart3, currentViewData.chart3.title, colors.accent)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 4 - Booking Channels */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart4.title}</h3>
-              </div>
-              <div className="h-[300px] flex items-center justify-center py-6">
-                 <div className="w-[300px] max-w-md">
-                   <Pie
-                      options={{
-                        ...options,
-                        responsive: true,
-                        maintainAspectRatio: true
-                      }}
-                      data={createPieDataset(currentViewData.chart4, currentViewData.chart4.title)}
-                    />
-                 </div>
-               </div>
-            </div>
-          </div>
-          
-          {/* Chart 5 - Cancellations */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart5.title}</h3>
-                <div className="flex items-center">
-                  <div className="flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                    </svg>
-                    4.2%
-                  </div>
-                </div>
-              </div>
-              <div className="h-72">
-                <Bar 
-                  options={options} 
-                  data={createBarDataset(currentViewData.chart5, currentViewData.chart5.title, colors.danger)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 6 - Product Sales */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart6.title}</h3>
-                <div className="flex items-center">
-                  <div className="flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-                    </svg>
-                    10.3%
-                  </div>
-                </div>
-              </div>
-              <div className="h-72">
-                <Bar 
-                  options={options} 
-                  data={createBarDataset(currentViewData.chart6, currentViewData.chart6.title, colors.neutral)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 7 - Peak Hours */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart7.title}</h3>
-              </div>
-              <div className="h-72">
-                <Bar 
-                  options={options} 
-                  data={createBarDataset(currentViewData.chart7, currentViewData.chart7.title, colors.primary)} 
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Chart 8 - Customer Type */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="px-6 pt-5 pb-5">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">{currentViewData.chart8.title}</h3>
-              </div>
-             <div className="h-[300px] flex items-center justify-center py-6">
-                 <div className="w-[300px] max-w-md">
-                   <Doughnut
-                      options={{
-                        ...options,
-                        responsive: true,
-                        maintainAspectRatio: true
-                      }}
-                      data={createPieDataset(currentViewData.chart8, currentViewData.chart8.title)}
-                    />
-                 </div>
-               </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Bottom section - Additional insights */}
-        {/* <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Performance Insights</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-500">Customer Retention</span>
-                <div className="mt-2 relative pt-1">
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-blue-200">
-                    <div style={{ width: '78%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500 transition-all duration-500"></div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold text-gray-600">78% retention rate</div>
-                    <div className="text-xs font-semibold text-green-600">↑ 3.2%</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-500">Stylist Utilization</span>
-                <div className="mt-2 relative pt-1">
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-green-200">
-                    <div style={{ width: '92%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500 transition-all duration-500"></div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold text-gray-600">92% utilization rate</div>
-                    <div className="text-xs font-semibold text-green-600">↑ 5.7%</div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-gray-500">Revenue Per Client</span>
-                <div className="mt-2 relative pt-1">
-                  <div className="overflow-hidden h-2 mb-1 text-xs flex rounded bg-purple-200">
-                    <div style={{ width: '85%' }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-purple-500 transition-all duration-500"></div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-xs font-semibold text-gray-600">₹85 per client average</div>
-                    <div className="text-xs font-semibold text-green-600">↑ 7.5%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> */}
-        
-        {/* Recommendations section */}
-        {/* <div className="mt-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-md overflow-hidden">
-          <div className="px-6 py-6 sm:px-8">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 bg-white rounded-full p-3">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                </svg>
-              </div>
-              <div className="ml-5">
-                <h3 className="text-lg font-bold text-white">AI-Powered Recommendations</h3>
-                <p className="text-indigo-100">Based on your salon's performance data</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 ">
-              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
-                <h4 className="text-white font-medium mb-2 text-black">Increase Marketing Focus</h4>
-                <p className="text-indigo-100 text-sm text-black">Promote color services to boost your second highest revenue generator by 15%.</p>
-              </div>
-              
-              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
-                <h4 className="text-white font-medium mb-2 text-black">Peak Hours Optimization</h4>
-                <p className="text-indigo-100 text-sm text-black" >Consider adding staff during 5-7pm to maximize revenue during your busiest times.</p>
-              </div>
-              
-              <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-lg p-4 border border-white border-opacity-20">
-                <h4 className="text-white font-medium mb-2 text-black">Client Retention Strategy</h4>
-                <p className="text-indigo-100 text-sm text-black">Implement a loyalty program to increase returning customer percentage.</p>
-              </div>
-            </div>
-          </div>
-        </div> */}
-        
-        {/* Footer */}
-        {/* <div className="mt-8 text-center text-sm text-gray-500 pb-6">
-          <p>© {new Date().getFullYear()} Salon Analytics Dashboard • Premium Edition</p>
-        </div> */}
-      </div>
-    </div>
-  );
-};
-
-export default SalonDashboard;
+    );
+  };
+  
+  export default SalonDashboard;

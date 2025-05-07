@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { 
   Search, Users, User, UserPlus, Clock, DollarSign, Activity, IndianRupee,
-  Calendar, ChevronDown
+  Calendar, CalendarDays, CalendarRange, ChevronDown, FilterIcon
 } from 'lucide-react';
 
 import TopCategories from '../../utils/topCategories.jsx';
@@ -32,488 +32,348 @@ function InsightCard({ icon, title, value, change, increased }) {
   );
 }
 
-// Date filter dropdown component
-function DateFilterDropdown({ selectedFilter, setSelectedFilter }) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const handleFilterChange = (filter) => {
-    setSelectedFilter(filter);
-    setIsOpen(false);
-  };
-  
-  return (
-    <div className="relative">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-40 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        {selectedFilter} 
-        <ChevronDown size={16} className="ml-2" />
-      </button>
-      
-      {isOpen && (
-        <div className="absolute z-10 w-40 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-          <ul className="py-1">
-            <li 
-              onClick={() => handleFilterChange('Daily')}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              Daily
-            </li>
-            <li 
-              onClick={() => handleFilterChange('Weekly')}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              Weekly
-            </li>
-            <li 
-              onClick={() => handleFilterChange('Monthly')}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              Monthly
-            </li>
-            <li 
-              onClick={() => handleFilterChange('Yearly')}
-              className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-            >
-              Yearly
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Improved date range picker component
-function DateRangePicker({ dateRange, setDateRange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [tempDateRange, setTempDateRange] = useState({
-    start: dateRange.start || '',
-    end: dateRange.end || ''
-  });
-  
-  const handleApply = () => {
-    setDateRange(tempDateRange);
-    setIsOpen(false);
-  };
-  
-  const formatDisplayDate = () => {
-    if (dateRange.start && dateRange.end) {
-      return `${new Date(dateRange.start).toLocaleDateString()} - ${new Date(dateRange.end).toLocaleDateString()}`;
-    }
-    return 'Select date range';
-  };
-  
-  return (
-    <div className="relative">
-      <button 
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      >
-        <Calendar size={16} className="mr-2" />
-        <span>{formatDisplayDate()}</span>
-      </button>
-      
-      {isOpen && (
-        <div className="absolute z-20 p-4 bg-white border border-gray-300 rounded-md shadow-lg w-72 -ml-20">
-          <h3 className="mb-3 text-sm font-medium text-gray-700">Select Date Range</h3>
-          <div className="flex flex-col space-y-3">
-            <div>
-              <label className="block text-xs text-gray-500">Start Date</label>
-              <input 
-                type="date" 
-                value={tempDateRange.start}
-                onChange={(e) => setTempDateRange({...tempDateRange, start: e.target.value})}
-                className="w-full p-2 text-sm border border-gray-300 rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-gray-500">End Date</label>
-              <input 
-                type="date"
-                value={tempDateRange.end}
-                onChange={(e) => setTempDateRange({...tempDateRange, end: e.target.value})}
-                className="w-full p-2 text-sm border border-gray-300 rounded-md"
-                min={tempDateRange.start} // Prevent selecting end date before start date
-              />
-            </div>
-            
-            {/* Quick selection buttons */}
-            <div className="grid grid-cols-2 gap-2">
-              <button 
-                onClick={() => {
-                  const today = new Date();
-                  const lastWeek = new Date();
-                  lastWeek.setDate(today.getDate() - 7);
-                  setTempDateRange({
-                    start: lastWeek.toISOString().split('T')[0],
-                    end: today.toISOString().split('T')[0]
-                  });
-                }}
-                className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Last 7 days
-              </button>
-              <button 
-                onClick={() => {
-                  const today = new Date();
-                  const lastMonth = new Date();
-                  lastMonth.setMonth(today.getMonth() - 1);
-                  setTempDateRange({
-                    start: lastMonth.toISOString().split('T')[0],
-                    end: today.toISOString().split('T')[0]
-                  });
-                }}
-                className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Last 30 days
-              </button>
-              <button 
-                onClick={() => {
-                  const today = new Date();
-                  const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-                  setTempDateRange({
-                    start: thisMonthStart.toISOString().split('T')[0],
-                    end: today.toISOString().split('T')[0]
-                  });
-                }}
-                className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                This Month
-              </button>
-              <button 
-                onClick={() => {
-                  const today = new Date();
-                  const thisYearStart = new Date(today.getFullYear(), 0, 1);
-                  setTempDateRange({
-                    start: thisYearStart.toISOString().split('T')[0],
-                    end: today.toISOString().split('T')[0]
-                  });
-                }}
-                className="px-2 py-1 text-xs text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                This Year
-              </button>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <button 
-                onClick={() => setIsOpen(false)}
-                className="px-3 py-1 text-sm text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleApply}
-                className="px-3 py-1 text-sm text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                disabled={!tempDateRange.start || !tempDateRange.end}
-              >
-                Apply
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// All data sets
-const dataSets = {
-  daily: {
-    revenue: [
-      { label: '22 Apr', totalRevenue: 4200, cumulativeRevenue: 4200 },
-      { label: '23 Apr', totalRevenue: 3800, cumulativeRevenue: 8000 },
-      { label: '24 Apr', totalRevenue: 4500, cumulativeRevenue: 12500 },
-      { label: '25 Apr', totalRevenue: 5100, cumulativeRevenue: 17600 },
-      { label: '26 Apr', totalRevenue: 4900, cumulativeRevenue: 22500 },
-      { label: '27 Apr', totalRevenue: 5800, cumulativeRevenue: 28300 },
-      { label: '28 Apr', totalRevenue: 6200, cumulativeRevenue: 34500 },
-      { label: '29 Apr', totalRevenue: 5600, cumulativeRevenue: 40100 },
-      { label: '30 Apr', totalRevenue: 5900, cumulativeRevenue: 46000 },
-      { label: '01 May', totalRevenue: 6100, cumulativeRevenue: 52100 },
-    ],
-    insights: {
-      totalIncome: { value: "₹ 6,100", change: "3.4", increased: true },
-      totalClients: { value: "45", change: "2.8", increased: true },
-      retentionRate: { value: 78, change: 3.2, increased: true },
-      churnRate: { value: 11, change: 2.1, increased: false },
-      avgAppointmentsPerDay: { value: 26, change: 4.5, increased: true },
-      pageViews: { value: 180, change: 6.2, increased: true },
-      newCustomers: { value: 7, change: 3.5, increased: true },
-      averageBill: { value: 1350, change: 2.9, increased: true }
-    }
-  },
+// Mock data for different time periods
+const allData = {
   weekly: {
-    revenue: [
-      { label: 'Week 1', totalRevenue: 18200, cumulativeRevenue: 18200 },
-      { label: 'Week 2', totalRevenue: 19400, cumulativeRevenue: 37600 },
-      { label: 'Week 3', totalRevenue: 17800, cumulativeRevenue: 55400 },
-      { label: 'Week 4', totalRevenue: 21500, cumulativeRevenue: 76900 },
-      { label: 'Week 5', totalRevenue: 20300, cumulativeRevenue: 97200 },
-      { label: 'Week 6', totalRevenue: 22100, cumulativeRevenue: 119300 },
-      { label: 'Week 7', totalRevenue: 23400, cumulativeRevenue: 142700 },
-      { label: 'Week 8', totalRevenue: 21900, cumulativeRevenue: 164600 },
+    revenueData: [
+      { month: 'Mon', totalRevenue: 9500, cumulativeRevenue: 9500 },
+      { month: 'Tue', totalRevenue: 8200, cumulativeRevenue: 17700 },
+      { month: 'Wed', totalRevenue: 10500, cumulativeRevenue: 28200 },
+      { month: 'Thu', totalRevenue: 11000, cumulativeRevenue: 39200 },
+      { month: 'Fri', totalRevenue: 15000, cumulativeRevenue: 54200 },
+      { month: 'Sat', totalRevenue: 21000, cumulativeRevenue: 75200 },
+      { month: 'Sun', totalRevenue: 12000, cumulativeRevenue: 87200 },
     ],
-    insights: {
-      totalIncome: { value: "₹ 21,900", change: "2.1", increased: false },
-      totalClients: { value: "162", change: "1.8", increased: true },
-      retentionRate: { value: 77, change: 2.8, increased: true },
-      churnRate: { value: 11.5, change: 1.5, increased: false },
-      avgAppointmentsPerDay: { value: 25, change: 3.8, increased: true },
-      pageViews: { value: 950, change: 4.9, increased: true },
-      newCustomers: { value: 22, change: 2.6, increased: true },
-      averageBill: { value: 1290, change: 2.5, increased: true }
+    customerInsights: {
+      retentionRate: { value: 72, change: 1.5, increased: true },
+      churnRate: { value: 15, change: 2.8, increased: false },
+      avgAppointmentsPerDay: { value: 22, change: 2.2, increased: true },
+      pageViews: { value: 450, change: 7.7, increased: true },
+      newCustomers: { value: 15, change: 3.9, increased: true },
+      averageBill: { value: 1150, change: 2.1, increased: true },
+      totalRevenue: { value: '₹ 87,200', change: 3.3, increased: true },
+      totalAppointments: { value: '154', change: 2.2, increased: true }
     }
   },
   monthly: {
-    revenue: [
-      { label: 'Jan', totalRevenue: 45000, cumulativeRevenue: 45000 },
-      { label: 'Feb', totalRevenue: 52000, cumulativeRevenue: 97000 },
-      { label: 'Mar', totalRevenue: 48000, cumulativeRevenue: 145000 },
-      { label: 'Apr', totalRevenue: 61000, cumulativeRevenue: 206000 },
-      { label: 'May', totalRevenue: 55000, cumulativeRevenue: 261000 },
-      { label: 'Jun', totalRevenue: 67000, cumulativeRevenue: 328000 },
-      { label: 'Jul', totalRevenue: 72000, cumulativeRevenue: 400000 },
-      { label: 'Aug', totalRevenue: 69000, cumulativeRevenue: 469000 },
-      { label: 'Sep', totalRevenue: 78000, cumulativeRevenue: 547000 },
-      { label: 'Oct', totalRevenue: 82000, cumulativeRevenue: 629000 },
+    revenueData: [
+      { month: 'Jan', totalRevenue: 45000, cumulativeRevenue: 45000 },
+      { month: 'Feb', totalRevenue: 52000, cumulativeRevenue: 97000 },
+      { month: 'Mar', totalRevenue: 48000, cumulativeRevenue: 145000 },
+      { month: 'Apr', totalRevenue: 61000, cumulativeRevenue: 206000 },
+      { month: 'May', totalRevenue: 55000, cumulativeRevenue: 261000 },
+      { month: 'Jun', totalRevenue: 67000, cumulativeRevenue: 328000 },
+      { month: 'Jul', totalRevenue: 72000, cumulativeRevenue: 400000 },
+      { month: 'Aug', totalRevenue: 69000, cumulativeRevenue: 469000 },
+      { month: 'Sep', totalRevenue: 78000, cumulativeRevenue: 547000 },
+      { month: 'Oct', totalRevenue: 82000, cumulativeRevenue: 629000 },
     ],
-    insights: {
-      totalIncome: { value: "₹ 82,000", change: "5.1", increased: true },
-      totalClients: { value: "517", change: "1.2", increased: true },
+    customerInsights: {
       retentionRate: { value: 76, change: 2.5, increased: true },
       churnRate: { value: 12, change: 1.8, increased: false },
       avgAppointmentsPerDay: { value: 24, change: 3.2, increased: true },
       pageViews: { value: 1450, change: 5.7, increased: true },
       newCustomers: { value: 45, change: 2.9, increased: true },
-      averageBill: { value: 1250, change: 3.1, increased: true }
+      averageBill: { value: 1250, change: 3.1, increased: true },
+      totalRevenue: { value: '₹ 89,648', change: 2.3, increased: true },
+      totalAppointments: { value: '517', change: 1.2, increased: true }
+    }
+  },
+  quarterly: {
+    revenueData: [
+      { month: 'Q1', totalRevenue: 145000, cumulativeRevenue: 145000 },
+      { month: 'Q2', totalRevenue: 183000, cumulativeRevenue: 328000 },
+      { month: 'Q3', totalRevenue: 219000, cumulativeRevenue: 547000 },
+      { month: 'Q4', totalRevenue: 82000, cumulativeRevenue: 629000 },
+    ],
+    customerInsights: {
+      retentionRate: { value: 79, change: 3.5, increased: true },
+      churnRate: { value: 10, change: 2.8, increased: false },
+      avgAppointmentsPerDay: { value: 26, change: 4.2, increased: true },
+      pageViews: { value: 4350, change: 8.7, increased: true },
+      newCustomers: { value: 115, change: 4.9, increased: true },
+      averageBill: { value: 1350, change: 5.1, increased: true },
+      totalRevenue: { value: '₹ 629,000', change: 5.3, increased: true },
+      totalAppointments: { value: '1,824', change: 3.2, increased: true }
     }
   },
   yearly: {
-    revenue: [
-      { label: '2020', totalRevenue: 580000, cumulativeRevenue: 580000 },
-      { label: '2021', totalRevenue: 620000, cumulativeRevenue: 1200000 },
-      { label: '2022', totalRevenue: 710000, cumulativeRevenue: 1910000 },
-      { label: '2023', totalRevenue: 850000, cumulativeRevenue: 2760000 },
-      { label: '2024', totalRevenue: 920000, cumulativeRevenue: 3680000 },
+    revenueData: [
+      { month: '2020', totalRevenue: 520000, cumulativeRevenue: 520000 },
+      { month: '2021', totalRevenue: 580000, cumulativeRevenue: 1100000 },
+      { month: '2022', totalRevenue: 670000, cumulativeRevenue: 1770000 },
+      { month: '2023', totalRevenue: 720000, cumulativeRevenue: 2490000 },
+      { month: '2024', totalRevenue: 629000, cumulativeRevenue: 3119000 },
     ],
-    insights: {
-      totalIncome: { value: "₹ 920,000", change: "8.2", increased: true },
-      totalClients: { value: "3245", change: "4.5", increased: true },
-      retentionRate: { value: 72, change: 1.8, increased: true },
-      churnRate: { value: 15, change: 2.3, increased: false },
-      avgAppointmentsPerDay: { value: 22, change: 2.6, increased: true },
-      pageViews: { value: "18,650", change: "6.8", increased: true },
-      newCustomers: { value: "430", change: "5.2", increased: true },
-      averageBill: { value: 1180, change: "2.7", increased: true }
+    customerInsights: {
+      retentionRate: { value: 81, change: 4.5, increased: true },
+      churnRate: { value: 8, change: 3.8, increased: false },
+      avgAppointmentsPerDay: { value: 25, change: 2.2, increased: true },
+      pageViews: { value: 15450, change: 12.7, increased: true },
+      newCustomers: { value: 320, change: 7.9, increased: true },
+      averageBill: { value: 1450, change: 6.1, increased: true },
+      totalRevenue: { value: '₹ 3,119,000', change: 7.3, increased: true },
+      totalAppointments: { value: '6,240', change: 5.2, increased: true }
     }
   },
   custom: {
-    revenue: [],
-    insights: {
-      totalIncome: { value: "₹ 0", change: "0", increased: true },
-      totalClients: { value: "0", change: "0", increased: true },
+    // This will be populated with data for custom date range
+    revenueData: [],
+    customerInsights: {
       retentionRate: { value: 0, change: 0, increased: true },
       churnRate: { value: 0, change: 0, increased: false },
       avgAppointmentsPerDay: { value: 0, change: 0, increased: true },
       pageViews: { value: 0, change: 0, increased: true },
       newCustomers: { value: 0, change: 0, increased: true },
-      averageBill: { value: 0, change: 0, increased: true }
+      averageBill: { value: 0, change: 0, increased: true },
+      totalRevenue: { value: '₹ 0', change: 0, increased: true },
+      totalAppointments: { value: '0', change: 0, increased: true }
     }
   }
 };
 
+// Dropdown menu component
+function Dropdown({ options, selected, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="relative">
+      <button
+        className="flex items-center justify-between w-40 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span className="flex items-center">
+          {options.find(opt => opt.value === selected)?.icon}
+          <span className="ml-2">{options.find(opt => opt.value === selected)?.label}</span>
+        </span>
+        <ChevronDown size={16} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
+              onClick={() => {
+                onChange(option.value);
+                setIsOpen(false);
+              }}
+            >
+              {option.icon}
+              <span className="ml-2">{option.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Date range picker component
+function DateRangePicker({ startDate, endDate, onStartDateChange, onEndDateChange, onApply }) {
+  return (
+    <div className={`flex items-center space-x-2 bg-white border border-gray-300 rounded-lg p-2 ${startDate && endDate ? 'border-blue-500' : ''}`}>
+      <input
+        type="date"
+        value={startDate}
+        onChange={(e) => onStartDateChange(e.target.value)}
+        className="text-sm border-none focus:ring-0"
+      />
+      <span className="text-gray-500">to</span>
+      <input
+        type="date"
+        value={endDate}
+        onChange={(e) => onEndDateChange(e.target.value)}
+        className="text-sm border-none focus:ring-0"
+      />
+      <button 
+        onClick={onApply}
+        disabled={!startDate || !endDate}
+        className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm disabled:opacity-50"
+      >
+        Apply
+      </button>
+    </div>
+  );
+}
+
 export default function SalonDashboard() {
-  const [selectedFilter, setSelectedFilter] = useState('Monthly');
-  const [dateRange, setDateRange] = useState({ start: '', end: '' });
-  const [currentData, setCurrentData] = useState(dataSets.monthly);
-  const [isCustomDate, setIsCustomDate] = useState(false);
-  
+  const [timeFilter, setTimeFilter] = useState('monthly');
+  const [currentData, setCurrentData] = useState(allData.monthly);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Time filter options for dropdown
+  const timeFilterOptions = [
+    { value: 'weekly', label: 'Weekly', icon: <Calendar size={16} /> },
+    { value: 'monthly', label: 'Monthly', icon: <CalendarDays size={16} /> },
+    { value: 'quarterly', label: 'Quarterly', icon: <CalendarRange size={16} /> },
+    { value: 'yearly', label: 'Yearly', icon: <CalendarRange size={16} /> },
+    { value: 'custom', label: 'Custom Range', icon: <FilterIcon size={16} /> },
+  ];
+
   // Update data when filter changes
   useEffect(() => {
-    if (isCustomDate) {
-      // In a real app, we would fetch data for the selected date range here
-      // For this demo, we'll just use dummy data
-      const customData = generateCustomData(dateRange);
-      setCurrentData(customData);
+    if (timeFilter === 'custom') {
+      setShowDatePicker(true);
     } else {
-      // Use predefined data based on filter
-      setCurrentData(dataSets[selectedFilter.toLowerCase()]);
+      setShowDatePicker(false);
+      setCurrentData(allData[timeFilter]);
     }
-  }, [selectedFilter, dateRange, isCustomDate]);
-  
-  // Generate custom data for date range (simulation)
-  const generateCustomData = (range) => {
-    if (!range.start || !range.end) return dataSets.custom;
+  }, [timeFilter]);
+
+  // Function to handle applying custom date range
+  const handleApplyDateRange = () => {
+    if (!startDate || !endDate) return;
     
-    const start = new Date(range.start);
-    const end = new Date(range.end);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    // Here you would typically make an API call to get data for the specific date range
+    // For this example, we'll simulate it by generating mock data
     
-    // Generate random data based on date range
-    const revenueData = [];
-    let cumulativeRevenue = 0;
+    // Format the date range for display
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const formattedStart = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const formattedEnd = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     
-    for (let i = 0; i < days; i++) {
-      const currentDate = new Date(start);
-      currentDate.setDate(start.getDate() + i);
-      const dailyRevenue = Math.floor(Math.random() * 2000) + 3000; // Random revenue between 3000-5000
-      cumulativeRevenue += dailyRevenue;
-      
-      revenueData.push({
-        label: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        totalRevenue: dailyRevenue,
-        cumulativeRevenue: cumulativeRevenue
-      });
-    }
+    // Generate some simple mock data based on the date range
+    const daysDifference = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+    const mockRevenue = daysDifference * 8000 + Math.random() * 10000;
     
-    // Calculate total income for the period
-    const totalIncome = revenueData.reduce((sum, day) => sum + day.totalRevenue, 0);
-    
-    return {
-      revenue: revenueData,
-      insights: {
-        totalIncome: { value: `₹ ${totalIncome.toLocaleString()}`, change: (Math.random() * 5 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        totalClients: { value: Math.floor(totalIncome / 1200).toString(), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        retentionRate: { value: Math.floor(Math.random() * 10 + 70), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        churnRate: { value: Math.floor(Math.random() * 5 + 10), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.7 },
-        avgAppointmentsPerDay: { value: Math.floor(Math.random() * 10 + 20), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        pageViews: { value: Math.floor(Math.random() * 1000 + 500), change: (Math.random() * 5 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        newCustomers: { value: Math.floor(Math.random() * 30 + 15), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.3 },
-        averageBill: { value: Math.floor(Math.random() * 300 + 1000), change: (Math.random() * 3 + 1).toFixed(1), increased: Math.random() > 0.3 }
+    // Create mock data for custom date range
+    const customData = {
+      revenueData: [
+        { month: formattedStart, totalRevenue: mockRevenue * 0.4, cumulativeRevenue: mockRevenue * 0.4 },
+        { month: formattedEnd, totalRevenue: mockRevenue * 0.6, cumulativeRevenue: mockRevenue },
+      ],
+      customerInsights: {
+        retentionRate: { value: 82, change: 3.5, increased: true },
+        churnRate: { value: 12, change: 1.7, increased: false },
+        avgAppointmentsPerDay: { value: 27, change: 3.8, increased: true },
+        pageViews: { value: 450, change: 7.2, increased: true },
+        newCustomers: { value: 18, change: 4.8, increased: true },
+        averageBill: { value: 1350, change: 3.9, increased: true },
+        totalRevenue: { value: "₹ 24,300", change: 5.1, increased: true },
+        totalAppointments: { value: "189", change: 3.2, increased: true }
       }
     };
+    
+    // Update the data state
+    allData.custom = customData;
+    setCurrentData(customData);
   };
-  
-  // Handle date range selection
-  const handleDateRangeChange = (range) => {
-    setDateRange(range);
-    setIsCustomDate(true);
-    // Reset filter to indicate we're using custom dates
-    setSelectedFilter('Custom');
+
+  // Handle time filter change
+  const handleTimeFilterChange = (value) => {
+    setTimeFilter(value);
   };
 
   return (
-    <div className="flex bg-gray-50 min-h-screen">
+    <div className="flex bg-gray-50 min-h-screen w-[1400px]">
       {/* Main Content */}
-      <div className="flex-1 p-8 w-[1400px]">
+      <div className="flex-1 p-8">
         {/* Top Bar */}
-        <h1 className="text-5xl font-extrabold tracking-tight text-gray-800 mb-5">
-          Growth Dashboard
-        </h1>
         <div className="flex justify-between items-center mb-8">
-          <div className="relative w-96">
-            <input
-              type="text"
-              placeholder="Search services, clients..."
-              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-          </div>
+          <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
+            Growth Dashboard
+          </h1>
           
-          {/* Time Period Filter Section */}
+          {/* Filter Controls */}
           <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <Calendar size={18} className="mr-2 text-gray-500" />
-              <span className="text-sm text-gray-600">View By:</span>
-            </div>
-            
-            <DateFilterDropdown 
-              selectedFilter={selectedFilter} 
-              setSelectedFilter={(filter) => {
-                setSelectedFilter(filter);
-                setIsCustomDate(false);
-              }}
+            <Dropdown 
+              options={timeFilterOptions}
+              selected={timeFilter}
+              onChange={handleTimeFilterChange}
             />
             
-            <DateRangePicker 
-              dateRange={dateRange}
-              setDateRange={handleDateRangeChange}
-            />
+            {showDatePicker && (
+              <DateRangePicker 
+                startDate={startDate}
+                endDate={endDate}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onApply={handleApplyDateRange}
+              />
+            )}
           </div>
         </div>
 
-        {/* Customer Insights Cards - Grid of 4x2 */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        {/* Grid layout for all insight cards - 4 cards per row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <InsightCard 
             icon={<IndianRupee size={20} />} 
-            title="Total Income" 
-            value={currentData.insights.totalIncome.value} 
-            change={currentData.insights.totalIncome.change} 
-            increased={currentData.insights.totalIncome.increased} 
+            title="Total Revenue" 
+            value={currentData.customerInsights.totalRevenue.value} 
+            change={currentData.customerInsights.totalRevenue.change} 
+            increased={currentData.customerInsights.totalRevenue.increased} 
           />
           <InsightCard 
             icon={<Users size={20} />} 
-            title="Total Clients" 
-            value={currentData.insights.totalClients.value} 
-            change={currentData.insights.totalClients.change} 
-            increased={currentData.insights.totalClients.increased} 
+            title="Total Appointments" 
+            value={currentData.customerInsights.totalAppointments.value} 
+            change={currentData.customerInsights.totalAppointments.change} 
+            increased={currentData.customerInsights.totalAppointments.increased} 
           />
           <InsightCard 
             icon={<Users size={20} />} 
             title="Customer Retention Rate" 
-            value={`${currentData.insights.retentionRate.value}%`} 
-            change={currentData.insights.retentionRate.change} 
-            increased={currentData.insights.retentionRate.increased} 
+            value={`${currentData.customerInsights.retentionRate.value}pts`} 
+            change={currentData.customerInsights.retentionRate.change} 
+            increased={currentData.customerInsights.retentionRate.increased} 
           />
           <InsightCard 
             icon={<UserPlus size={20} />} 
             title="Churn Rate" 
-            value={`${currentData.insights.churnRate.value}%`} 
-            change={currentData.insights.churnRate.change} 
-            increased={currentData.insights.churnRate.increased} 
+            value={`${currentData.customerInsights.churnRate.value}pts`} 
+            change={currentData.customerInsights.churnRate.change} 
+            increased={currentData.customerInsights.churnRate.increased} 
           />
           <InsightCard 
             icon={<Clock size={20} />} 
             title="Avg. Appointments Per Day" 
-            value={currentData.insights.avgAppointmentsPerDay.value} 
-            change={currentData.insights.avgAppointmentsPerDay.change} 
-            increased={currentData.insights.avgAppointmentsPerDay.increased} 
+            value={currentData.customerInsights.avgAppointmentsPerDay.value} 
+            change={currentData.customerInsights.avgAppointmentsPerDay.change} 
+            increased={currentData.customerInsights.avgAppointmentsPerDay.increased} 
           />
           <InsightCard 
             icon={<Activity size={20} />} 
             title="Salon Page Views" 
-            value={currentData.insights.pageViews.value} 
-            change={currentData.insights.pageViews.change} 
-            increased={currentData.insights.pageViews.increased} 
+            value={currentData.customerInsights.pageViews.value} 
+            change={currentData.customerInsights.pageViews.change} 
+            increased={currentData.customerInsights.pageViews.increased} 
           />
           <InsightCard 
             icon={<UserPlus size={20} />} 
-            title="New Customers" 
-            value={currentData.insights.newCustomers.value} 
-            change={currentData.insights.newCustomers.change} 
-            increased={currentData.insights.newCustomers.increased} 
+            title="New Customers This Period" 
+            value={currentData.customerInsights.newCustomers.value} 
+            change={currentData.customerInsights.newCustomers.change} 
+            increased={currentData.customerInsights.newCustomers.increased} 
           />
           <InsightCard 
             icon={<IndianRupee size={20} />} 
             title="Average Bill" 
-            value={`₹ ${currentData.insights.averageBill.value}`} 
-            change={currentData.insights.averageBill.change} 
-            increased={currentData.insights.averageBill.increased} 
+            value={`₹ ${currentData.customerInsights.averageBill.value}`} 
+            change={currentData.customerInsights.averageBill.change} 
+            increased={currentData.customerInsights.averageBill.increased} 
           />
         </div>
-        
+
         {/* Revenue Chart */}
         <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            Revenue Analysis ({isCustomDate ? 
-              `${new Date(dateRange.start).toLocaleDateString()} - ${new Date(dateRange.end).toLocaleDateString()}` : 
-              selectedFilter})
-          </h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Revenue Analysis</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={currentData.revenue}>
+              <LineChart data={currentData.revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="label" />
+                <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
                 <Line 
                   type="monotone" 
                   dataKey="totalRevenue" 
                   stroke="#3B82F6" 
-                  name={`${selectedFilter} Revenue`} 
+                  name="Period Revenue" 
                   strokeWidth={2}
                 />
                 <Line 
@@ -527,17 +387,19 @@ export default function SalonDashboard() {
             </ResponsiveContainer>
           </div>
         </div>
-        
+
         {/* Side by side Top Categories and Conversion Funnel */}
-        <div className="grid grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Top Categories */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <TopCategories/>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Top Categories</h2>
+            <TopCategories timeFilter={timeFilter} />
           </div>
 
           {/* Funnel Chart */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
-            <ConversionFunnel/>
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Conversion Funnel</h2>
+            <ConversionFunnel timeFilter={timeFilter} />
           </div>
         </div>
       </div>

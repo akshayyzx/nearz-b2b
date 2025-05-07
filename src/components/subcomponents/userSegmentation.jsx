@@ -25,7 +25,7 @@ export default function RFMSegmentsTreemap() {
       days: 30,
       gradientFrom: "#0284C7",
       gradientTo: "#38BDF8",
-      description: "Most valuable – visit recently, regularly & high spenders."
+      description: "Most valuable – visit recently, regularly & high spenders"
     },
     {
       id: 2,
@@ -40,7 +40,7 @@ export default function RFMSegmentsTreemap() {
       days: 60,
       gradientFrom: "#4338CA",
       gradientTo: "#818CF8",
-      description: "Visit often and spend well, but not always very recent."
+      description: "Visit often and spend well, but not always very recent"
     },
     {
       id: 3,
@@ -55,7 +55,7 @@ export default function RFMSegmentsTreemap() {
       days: 90,
       gradientFrom: "#047857",
       gradientTo: "#34D399",
-      description: "Visit often and spend well – they can become regular loyal customers."
+      description: "Visit often and spend well – they can become regular loyal customers"
     },
     {
       id: 4,
@@ -70,7 +70,7 @@ export default function RFMSegmentsTreemap() {
       days: 30,
       gradientFrom: "#6D28D9",
       gradientTo: "#C084FC",
-      description: "Just visited your salon for the first time."
+      description: "Just visited your salon for the first time"
     },
     {
       id: 5,
@@ -85,7 +85,7 @@ export default function RFMSegmentsTreemap() {
       days: 60,
       gradientFrom: "#B45309",
       gradientTo: "#FCD34D",
-      description: "Recently bought and spent moderately, potential to return."
+      description: "Recently bought and spent moderately, potential to return"
     },
     {
       id: 6,
@@ -100,7 +100,7 @@ export default function RFMSegmentsTreemap() {
       days: 90,
       gradientFrom: "#EA580C",
       gradientTo: "#FDBA74",
-      description: "Haven't been around lately but used to spend well."
+      description: "Haven't been around lately but used to spend well"
     },
     {
       id: 7,
@@ -115,7 +115,7 @@ export default function RFMSegmentsTreemap() {
       days: 120,
       gradientFrom: "#BE123C",
       gradientTo: "#FB7185",
-      description: "Very inactive with low spending or low visits."
+      description: "Very inactive with low spending or low visits"
     },
     {
       id: 8,
@@ -130,7 +130,7 @@ export default function RFMSegmentsTreemap() {
       days: 180,
       gradientFrom: "#0F766E",
       gradientTo: "#2DD4BF",
-      description: "Frequent and big spenders, but haven't visited recently."
+      description: "Frequent and big spenders, but haven't visited recently"
     },
     {
       id: 9,
@@ -145,7 +145,7 @@ export default function RFMSegmentsTreemap() {
       days: 150,
       gradientFrom: "#9F1239",
       gradientTo: "#FB7185",
-      description: "Used to be good customers but haven't returned in a while."
+      description: "Used to be good customers but haven't returned in a while"
     },
     {
       id: 10,
@@ -160,7 +160,7 @@ export default function RFMSegmentsTreemap() {
       days: 200,
       gradientFrom: "#475569",
       gradientTo: "#CBD5E1",
-      description: "Haven't bought in a long time and didn't spend much."
+      description: "Haven't bought in a long time and didn't spend much"
     },
     {
       id: 11,
@@ -175,7 +175,7 @@ export default function RFMSegmentsTreemap() {
       days: 365,
       gradientFrom: "#374151",
       gradientTo: "#D1D5DB",
-      description: "Completely inactive and not valuable anymore."
+      description: "Completely inactive and not valuable anymore"
     },
     {
       id: 12,
@@ -190,7 +190,7 @@ export default function RFMSegmentsTreemap() {
       days: 45,
       gradientFrom: "#7C3AED",
       gradientTo: "#C084FC",
-      description: "Visit recently and often, but usually spend less."
+      description: "Visit recently and often, but usually spend less"
     }
   ];
   
@@ -237,9 +237,27 @@ export default function RFMSegmentsTreemap() {
       "Makeup", "Bridal Package", "Hair Treatment", "Keratin Treatment", "Body Scrub"
     ];
     
+    // Gender options
+    const genders = ["Male", "Female", "Prefer not to say"];
+    
     const customers = [];
     for (let i = 1; i <= count; i++) {
-      const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      // Determine gender first
+      const gender = genders[Math.floor(Math.random() * genders.length)];
+      
+      // Select first name based on gender (simplified approach)
+      let firstName;
+      if (gender === "Male") {
+        // Use names from first half of the array (male names)
+        firstName = firstNames[Math.floor(Math.random() * 15)];
+      } else if (gender === "Female") {
+        // Use names from second half of the array (female names)
+        firstName = firstNames[Math.floor(Math.random() * 15) + 15];
+      } else {
+        // Random name from the entire array
+        firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+      }
+      
       const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
       const fullName = `${firstName} ${lastName}`;
       
@@ -247,24 +265,39 @@ export default function RFMSegmentsTreemap() {
       const randomAlphaNum = Math.random().toString(36).substring(2, 8).toUpperCase();
       const id = `IN${new Date().getFullYear().toString().slice(-2)}${segment.substring(0, 2).toUpperCase()}${randomAlphaNum}`;
       
-      // Adjust revenue based on segment - Price Sensitive will have lower revenue
-      let revenue;
+      // Generate billCount (formerly orders)
+      let billCount;
       if (segment === "Price Sensitive") {
-        revenue = Math.floor(Math.random() * 300) + 500; // Lower revenue for price sensitive
+        billCount = Math.floor(Math.random() * 10) + 5; // Higher frequency but lower spend
       } else if (segment === "Lost") {
-        revenue = Math.floor(Math.random() * 200) + 300; // Very low revenue for lost customers
+        billCount = Math.floor(Math.random() * 3) + 1; // Very few orders for lost customers
       } else {
-        revenue = Math.floor(Math.random() * 500) + 1000; // Normal revenue for others
+        billCount = Math.floor(Math.random() * 15) + 1; // Normal orders for others
       }
       
-      // Adjust orders based on segment
-      let orders;
-      if (segment === "Price Sensitive") {
-        orders = Math.floor(Math.random() * 10) + 5; // Higher frequency but lower spend
+      // Generate LTV (Lifetime Value)
+      let ltv;
+      if (segment === "Champions" || segment === "Loyal Customers") {
+        ltv = Math.floor(Math.random() * 20000) + 30000; // Higher LTV for valuable customers
+      } else if (segment === "Price Sensitive") {
+        ltv = Math.floor(Math.random() * 10000) + 5000; // Lower LTV for price sensitive
       } else if (segment === "Lost") {
-        orders = Math.floor(Math.random() * 3) + 1; // Very few orders for lost customers
+        ltv = Math.floor(Math.random() * 5000) + 2000; // Very low LTV for lost customers
       } else {
-        orders = Math.floor(Math.random() * 15) + 1; // Normal orders for others
+        ltv = Math.floor(Math.random() * 15000) + 10000; // Normal LTV for others
+      }
+      
+      // Generate Average Rating (out of 5)
+      let avgRating;
+      if (segment === "Champions" || segment === "Loyal Customers") {
+        // Higher ratings for valuable customers (4.0 - 5.0)
+        avgRating = (Math.random() * 1.0 + 4.0).toFixed(1);
+      } else if (segment === "Lost" || segment === "Hibernating") {
+        // Lower ratings for inactive customers (2.0 - 4.0)
+        avgRating = (Math.random() * 2.0 + 2.0).toFixed(1);
+      } else {
+        // Normal ratings for others (3.0 - 5.0)
+        avgRating = (Math.random() * 2.0 + 3.0).toFixed(1);
       }
       
       // Adjust last order days based on segment
@@ -311,11 +344,15 @@ export default function RFMSegmentsTreemap() {
           amount = Math.floor(Math.random() * 10000) + 1000; // Normal spending for others
         }
         
+        // Generate random rating for this specific order (1-5 stars)
+        const orderRating = Math.floor(Math.random() * 5) + 1;
+        
         last5Orders.push({
           orderId: orderId,
           date: date.toLocaleDateString('en-GB'),
           service: service,
-          amount: amount
+          amount: amount,
+          rating: orderRating
         });
       }
       
@@ -329,11 +366,13 @@ export default function RFMSegmentsTreemap() {
       customers.push({
         id: id,
         name: fullName,
+        gender: gender,
         phone: phone,
-        orders,
-        revenue,
-        lastOrderDays,
-        last5Orders
+        billCount: billCount,
+        ltv: ltv,
+        avgRating: avgRating,
+        lastOrderDays: lastOrderDays,
+        last5Orders: last5Orders
       });
     }
     return customers;
@@ -409,10 +448,11 @@ export default function RFMSegmentsTreemap() {
         // Show tooltip on hover
         tooltip
         .html(`
-          <strong>${d.data.name}</strong><br/>
-          Customers: ${d.data.displayValue}<br/>
-          Percentage: ${d.data.percent}<br/>
-          <div style="max-width: 250px; white-space: normal; word-wrap: break-word;">Description: ${d.data.description}</div>
+          <strong>${d.data.name}</strong> (${d.data.description})
+          <div style="max-width: 250px; white-space: normal; word-wrap: break-word;">
+            Customers: ${d.data.displayValue}<br/>
+            Percentage: ${d.data.percent}<br/>
+          </div>
         `)
         .style("visibility", "visible")
         .style("left", (event.pageX + 10) + "px")
@@ -519,13 +559,14 @@ export default function RFMSegmentsTreemap() {
     return sortedData.filter(customer => 
       customer.name.toLowerCase().includes(filterValue.toLowerCase()) ||
       customer.phone.toLowerCase().includes(filterValue.toLowerCase()) ||
-      customer.id.toLowerCase().includes(filterValue.toLowerCase())
+      customer.id.toLowerCase().includes(filterValue.toLowerCase()) ||
+      customer.gender.toLowerCase().includes(filterValue.toLowerCase())
     );
   }, [sortedData, filterValue]);
 
   return (
-    <div className=" w-[1200px] p-6 bg-white rounded-lg shadow mx-auto mt-5">
-      <h2 className="text-3xl font-bold mb-6 text-center">Customer Segmentation Analysis</h2>
+    <div className="w-[1200px] p-6 bg-white rounded-lg shadow mx-auto mt-5">
+      <h2 className="text-3xl font-bold mb-6">Customer Segmentation Analysis</h2>
        
      {/* D3.js Treemap Visualization */}
       <div>
@@ -544,101 +585,119 @@ export default function RFMSegmentsTreemap() {
       
       {/* Customer Table (appears when a segment is clicked) */}
      {showTable && selectedSegment && (
-  <div className="mt-8 border-t pt-6">
-    <div className="flex justify-between items-center mb-4">
-      <h3 className="text-xl font-semibold text-blue-700">
-        {selectedSegment.name} Segment Customers
-      </h3>
-      <div className="flex items-center space-x-2">
-        <input
-          type="text"
-          placeholder="Search customers..."
-          className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-          value={filterValue}
-          onChange={(e) => setFilterValue(e.target.value)}
-        />
-        <button 
-          className="text-gray-600 hover:text-red-600 text-lg font-bold px-3 py-1"
-          title="Close"
-          onClick={() => setShowTable(false)}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-    
-    <div className="overflow-x-auto rounded border">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-100">
-          <tr>
-            <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort('id')}
-            >
-             Customer ID {sortConfig.key === 'id' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-            </th>
-            <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort('name')}
-            >
-              Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-              Phone
-            </th>
-            <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort('orders')}
-            >
-              Orders {sortConfig.key === 'orders' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-            </th>
-            <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
-              onClick={() => handleSort('revenue')}
-            >
-              Revenue {sortConfig.key === 'revenue' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-            </th>
-            <th
-              className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer whitespace-nowrap"
-              onClick={() => handleSort('lastOrderDays')}
-            >
-              Last Service {sortConfig.key === 'lastOrderDays' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {filteredData.map(customer => (
-            <React.Fragment key={customer.id}>
-              <tr
-                className="hover:bg-gray-50 cursor-pointer"
-                onClick={() => handleCustomerClick(customer)}
+        <div className="mt-8 border-t pt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-blue-700">
+              {selectedSegment.name} Segment Customers
+            </h3>
+            <div className="flex items-center space-x-2">
+              <input
+                type="text"
+                placeholder="Search customers..."
+                className="px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                value={filterValue}
+                onChange={(e) => setFilterValue(e.target.value)}
+              />
+              <button 
+                className="text-gray-600 hover:text-red-600 text-lg font-bold px-3 py-1"
+                title="Close"
+                onClick={() => setShowTable(false)}
               >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {customer.id}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                  {customer.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {customer.phone}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {customer.orders}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  ₹{customer.revenue.toLocaleString()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                  {customer.lastOrderDays} days ago
-                </td>
-              </tr>
-
-              {expandedCustomer === customer.id && (
+                ×
+              </button>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto rounded border">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-100">
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 bg-gray-50">
-                    <div className="p-4 rounded">
-                      <h4 className="font-semibold mb-2 text-gray-800">Last 5 Services</h4>
-                      <table className="min-w-full">
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('id')}
+                  >
+                   Service ID {sortConfig.key === 'id' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('name')}
+                  >
+                    Name {sortConfig.key === 'name' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('gender')}
+                  >
+                    Gender {sortConfig.key === 'gender' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                    Phone
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('billCount')}
+                  >
+                    Bill Count {sortConfig.key === 'billCount' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('ltv')}
+                  >
+                    LTV (₹) {sortConfig.key === 'ltv' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSort('avgRating')}
+                  >
+                    Avg. Rating {sortConfig.key === 'avgRating' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                  <th
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                    onClick={() => handleSort('lastOrderDays')}
+                  >
+                    Last Service {sortConfig.key === 'lastOrderDays' && (sortConfig.direction === 'ascending' ? '↑' : '↓')}
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredData.map(customer => (
+                  <React.Fragment key={customer.id}>
+                    <tr
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => handleCustomerClick(customer)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {customer.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {customer.gender}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {customer.phone}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {customer.billCount}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        ₹{customer.ltv.toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {customer.avgRating} ★
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {customer.lastOrderDays} days ago
+                      </td>
+                    </tr>
+
+                    {expandedCustomer === customer.id && (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-4 bg-gray-50">
+                          <div className="p-4 rounded">
+                            <h4 className="font-semibold mb-2 text-gray-800">Last 5 Services</h4>
+                            <table className="min-w-full">
                         <thead>
                           <tr>
                             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Service ID</th>

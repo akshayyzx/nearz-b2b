@@ -13,11 +13,12 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const MyCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState('month');
+  const [currentView, setCurrentView] = useState('week');
   const [eventList, setEventList] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isLoadingEvents, setIsLoadingEvents] = useState(true);
+  
 
   const convertToDateObject = (dateStr, timeStr) => {
     const [year, month, day] = dateStr.split('-').map(num => parseInt(num, 10));
@@ -170,7 +171,8 @@ const loadEvents= useCallback(async () => {
 
     return (
       <div className="fresha-toolbar">
-        <div className="fresha-toolbar-left">
+        <h1 className='font-bold text-2xl'>Appointments Calendar</h1>
+        <div className="fresha-toolbar-left ml-75">
           <button 
             className="today-btn" 
             onClick={goToToday}
@@ -192,24 +194,24 @@ const loadEvents= useCallback(async () => {
             <span>Scheduled team</span>
             <span className="arrow-down">▼</span>
           </div> */}
-          <h1 className='font-bold text-2xl'>Appointments Calendar</h1>
+          
           {/* <button className="filter-btn">
             <span>≡</span>
           </button> */}
         </div>
         <div className="fresha-toolbar-right">
-          <button 
+          {/* <button 
             className="settings-btn"
             title="Settings"
           >
             <span>⚙️</span>
-          </button>
-          <button 
+          </button> */}
+          {/* <button 
             className="calendar-btn"
             title="Calendar"
           >
             <span>📅</span>
-          </button>
+          </button> */}
           <button 
             className="refresh-btn"
             onClick={loadEvents}

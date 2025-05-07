@@ -54,8 +54,8 @@ export default function SalonFunnel() {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-800">Salon Booking Funnel</h2>
-        <span className="text-sm text-gray-500">May 2025</span>
+        <h2 className="text-xl font-bold text-gray-800">Conversion Funnel</h2>
+        {/* <span className="text-sm text-gray-500">May 2025</span> */}
       </div>
 
       {/* Stat Summary */}
@@ -69,7 +69,7 @@ export default function SalonFunnel() {
       </div>
 
       {/* Chart */}
-      <div className="h-64">
+      <div className="h-82">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={salonData}
