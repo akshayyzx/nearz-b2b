@@ -27,7 +27,7 @@ body {
 
 .fresha-toolbar {
   display: flex;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   align-items: center;
   padding: 10px 15px;
   background-color: #ffffff;
@@ -53,6 +53,7 @@ body {
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
+  width: 10px;
 }
 .today-btn {
   background-color: #fff;
@@ -147,8 +148,8 @@ button:hover {
   background: none;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
-  width: 32px;
-  height: 32px;
+  width: 60px;
+  /* height: 32px; */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -167,13 +168,14 @@ button:hover {
   position: relative;
   border: 1px solid #e5e7eb;
   border-radius: 4px;
-  overflow: hidden;
+  /* overflow: hidden; */
+  width: 12vw;
 }
 
 .view-select {
   appearance: none;
   border: none;
-  padding: 6px 24px 6px 12px;
+  padding: 6px;
   font-size: 14px;
   font-weight: 500;
   background-color: transparent;

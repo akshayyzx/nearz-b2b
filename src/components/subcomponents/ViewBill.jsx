@@ -5,8 +5,30 @@ const ViewBill = () => {
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentDateTime, setCurrentDateTime] = useState('');
+  const [formattedDate, setFormattedDate] = useState('');
+  const [formattedTime, setFormattedTime] = useState('');
   const { ulid } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Set current date and time when component mounts using Indian format
+    const now = new Date();
+    const date = now.toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    const time = now.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+    setFormattedDate(date);
+    setFormattedTime(time);
+    setCurrentDateTime(`${date} at ${time}`);
+  }, []);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -39,10 +61,9 @@ const ViewBill = () => {
 
   if (loading) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-white">
-        <p className="text-xl w-[60vw] text-center">Loading invoice...</p>
+      <div className="flex items-center justify-center min-h-screen bg-white">
+        <p className="text-xl w-full text-center">Loading invoice...</p>
       </div>
-      
     );
   }
 
@@ -89,15 +110,23 @@ const ViewBill = () => {
     0
   ) || 0;
 
+  // Calculate total after discount
+  const totalAfterDiscount = subtotal - (discount || 0);
+
   return (
     <div className="min-h-screen bg-white p-4 text-black">
       <div className="max-w-4xl mx-auto p-6 border border-gray-300 rounded">
-        <button 
-          onClick={handleBack}
-          className="text-blue-600 underline mb-4"
-        >
-          &lt; View Bill
-        </button>
+        <div className="flex justify-between items-center mb-4">
+          <button 
+            onClick={handleBack}
+            className="text-blue-600 underline"
+          >
+            &lt; View Bill
+          </button>
+          {/* <div className="text-sm text-gray-500">
+            Generated: {currentDateTime}
+          </div> */}
+        </div>
 
         <h2 className="text-2xl font-bold text-center mb-4">{salon?.name || "Salon Name"}</h2>
 
@@ -107,8 +136,8 @@ const ViewBill = () => {
         <hr className="my-3" />
 
         <p className="mb-1"><strong>Invoice:</strong> {id || "N/A"}</p>
-        <p className="mb-1"><strong>Invoice Date:</strong> {date || "N/A"}</p>
-        <p className="mb-1"><strong>Invoice Generated on:</strong> {end_time || "N/A"}</p>
+        <p className="mb-1"><strong>Service Date:</strong> {date || "N/A"}</p>
+        <p className="mb-1"><strong>Invoice Generated on:</strong> {formattedDate} at {formattedTime}</p>
         <p className="mb-1"><strong>Customer:</strong> {user?.username || "N/A"}</p>
         <p className="mb-3"><strong>Contact:</strong> {user?.mobile || "N/A"}</p>
 
@@ -140,15 +169,17 @@ const ViewBill = () => {
           </tbody>
         </table>
 
-        <p className="mb-1"><strong>Discount:</strong> ₹{discount || 0}</p>
-
-        <hr className="my-3" />
-
-        <p className="text-lg font-bold mb-4"><strong>GRAND TOTAL:</strong> ₹{subtotal.toFixed(2)}</p>
+        <div className="flex flex-col items-end">
+          <p className="mb-1"><strong>Subtotal:</strong> ₹{subtotal.toFixed(2)}</p>
+          <p className="mb-1"><strong>Discount:</strong> ₹{discount || 0}</p>
+          <hr className="my-2 w-48" />
+          <p className="text-lg font-bold mb-4"><strong>GRAND TOTAL:</strong> ₹{totalAfterDiscount.toFixed(2)}</p>
+        </div>
 
         <div className="text-center text-gray-700 mt-8 italic">
           <p>Thank you for your visit!</p>
           <p className="text-sm">This is a system-generated bill and does not require a signature.</p>
+          <p className="text-xs mt-2">Viewed on: {currentDateTime}</p>
         </div>
       </div>
     </div>

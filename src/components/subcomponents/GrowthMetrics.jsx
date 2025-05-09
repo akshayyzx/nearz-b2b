@@ -9,6 +9,7 @@ import {
 
 import TopCategories from '../../utils/topCategories.jsx';
 import ConversionFunnel from '../../utils/coversionFunnel.jsx';
+import CustomDateRangeComponent from './CustomDateRangeComponent.jsx';
 
 // Component for customer insight card
 function InsightCard({ icon, title, value, change, increased }) {
@@ -170,98 +171,155 @@ function Dropdown({ options, selected, onChange }) {
   );
 }
 
-// Date range picker component
-function DateRangePicker({ startDate, endDate, onStartDateChange, onEndDateChange, onApply }) {
-  return (
-    <div className={`flex items-center space-x-2 bg-white border border-gray-300 rounded-lg p-2 ${startDate && endDate ? 'border-blue-500' : ''}`}>
-      <input
-        type="date"
-        value={startDate}
-        onChange={(e) => onStartDateChange(e.target.value)}
-        className="text-sm border-none focus:ring-0"
-      />
-      <span className="text-gray-500">to</span>
-      <input
-        type="date"
-        value={endDate}
-        onChange={(e) => onEndDateChange(e.target.value)}
-        className="text-sm border-none focus:ring-0"
-      />
-      <button 
-        onClick={onApply}
-        disabled={!startDate || !endDate}
-        className="bg-blue-600 text-white px-3 py-1 rounded-md text-sm disabled:opacity-50"
-      >
-        Apply
-      </button>
-    </div>
-  );
+// Helper function to generate realistic mock data for custom date range
+function generateCustomData(startDate, endDate) {
+  // Parse dates
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Calculate days difference
+  const daysDifference = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  
+  // Generate revenue data points - create points for each day if less than 10 days,
+  // otherwise create equally spaced points
+  let revenueData = [];
+  let cumulativeRevenue = 0;
+  
+  if (daysDifference <= 10) {
+    // Create a data point for each day
+    for (let i = 0; i < daysDifference; i++) {
+      const currentDate = new Date(start);
+      currentDate.setDate(start.getDate() + i);
+      
+      // Generate realistic daily revenue (between 8000 and 15000)
+      const dailyRevenue = Math.floor(800 + Math.random() * 700);
+      cumulativeRevenue += dailyRevenue;
+      
+      revenueData.push({
+        month: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        totalRevenue: dailyRevenue,
+        cumulativeRevenue: cumulativeRevenue
+      });
+    }
+  } else {
+    // For longer periods, create equally spaced points
+    const interval = Math.ceil(daysDifference / 7); // Create about 7 data points
+    
+    for (let i = 0; i < daysDifference; i += interval) {
+      const currentDate = new Date(start);
+      currentDate.setDate(start.getDate() + i);
+      
+      // Generate period revenue (scaled by the number of days in this interval)
+      const daysInThisInterval = Math.min(interval, daysDifference - i);
+      const periodRevenue = Math.floor(daysInThisInterval * (8000 + Math.random() * 2000));
+      cumulativeRevenue += periodRevenue;
+      
+      revenueData.push({
+        month: currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        totalRevenue: periodRevenue,
+        cumulativeRevenue: cumulativeRevenue
+      });
+    }
+    
+    // Always include the end date as the last point if it's not already included
+    const lastPoint = revenueData[revenueData.length - 1];
+    const lastPointDate = new Date(lastPoint.month);
+    if (lastPointDate.getDate() !== end.getDate() || lastPointDate.getMonth() !== end.getMonth()) {
+      const finalPeriodRevenue = Math.floor(interval * (8000 + Math.random() * 2000));
+      cumulativeRevenue += finalPeriodRevenue;
+      
+      revenueData.push({
+        month: end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        totalRevenue: finalPeriodRevenue,
+        cumulativeRevenue: cumulativeRevenue
+      });
+    }
+  }
+  
+  // Generate realistic customer insights based on the date range
+  const customerInsights = {
+    retentionRate: { 
+      value: Math.floor(75 + Math.random() * 10), 
+      change: +(2 + Math.random() * 4).toFixed(1), 
+      increased: Math.random() > 0.2 // 80% chance of being increased
+    },
+    churnRate: { 
+      value: Math.floor(5 + Math.random() * 10), 
+      change: +(1 + Math.random() * 3).toFixed(1), 
+      increased: Math.random() > 0.7 // 30% chance of being increased (which is bad for churn)
+    },
+    avgAppointmentsPerDay: { 
+      value: Math.floor(20 + Math.random() * 10), 
+      change: +(1 + Math.random() * 5).toFixed(1), 
+      increased: Math.random() > 0.2
+    },
+    pageViews: { 
+      value: Math.floor(300 + Math.random() * 3000), 
+      change: +(3 + Math.random() * 10).toFixed(1), 
+      increased: Math.random() > 0.1
+    },
+    newCustomers: { 
+      value: Math.floor(10 + daysDifference * (1 + Math.random())), 
+      change: +(2 + Math.random() * 6).toFixed(1), 
+      increased: Math.random() > 0.2
+    },
+    averageBill: { 
+      value: Math.floor(1000 + Math.random() * 500), 
+      change: +(1 + Math.random() * 5).toFixed(1), 
+      increased: Math.random() > 0.2
+    },
+    totalRevenue: { 
+      value: `₹ ${cumulativeRevenue.toLocaleString()}`, 
+      change: +(2 + Math.random() * 6).toFixed(1), 
+      increased: Math.random() > 0.1
+    },
+    totalAppointments: { 
+      value: Math.floor(daysDifference * (15 + Math.random() * 10)).toLocaleString(), 
+      change: +(1 + Math.random() * 4).toFixed(1), 
+      increased: Math.random() > 0.2
+    }
+  };
+  
+  return {
+    revenueData,
+    customerInsights
+  };
 }
 
 export default function SalonDashboard() {
   const [timeFilter, setTimeFilter] = useState('monthly');
   const [currentData, setCurrentData] = useState(allData.monthly);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [customDateApplied, setCustomDateApplied] = useState(false);
 
   // Time filter options for dropdown
   const timeFilterOptions = [
-    { value: 'weekly', label: 'Weekly', icon: <Calendar size={16} /> },
+    { value: 'weekly', label: 'Daily', icon: <Calendar size={16} /> },
     { value: 'monthly', label: 'Monthly', icon: <CalendarDays size={16} /> },
     { value: 'quarterly', label: 'Quarterly', icon: <CalendarRange size={16} /> },
     { value: 'yearly', label: 'Yearly', icon: <CalendarRange size={16} /> },
-    { value: 'custom', label: 'Custom Range', icon: <FilterIcon size={16} /> },
+    { value: 'custom', label: 'Custom Date Range', icon: <FilterIcon size={16} /> },
   ];
 
   // Update data when filter changes
   useEffect(() => {
-    if (timeFilter === 'custom') {
-      setShowDatePicker(true);
-    } else {
-      setShowDatePicker(false);
+    if (timeFilter !== 'custom') {
       setCurrentData(allData[timeFilter]);
+      setCustomDateApplied(false);
     }
   }, [timeFilter]);
 
-  // Function to handle applying custom date range
-  const handleApplyDateRange = () => {
-    if (!startDate || !endDate) return;
-    
-    // Here you would typically make an API call to get data for the specific date range
-    // For this example, we'll simulate it by generating mock data
-    
-    // Format the date range for display
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const formattedStart = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const formattedEnd = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    
-    // Generate some simple mock data based on the date range
-    const daysDifference = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    const mockRevenue = daysDifference * 8000 + Math.random() * 10000;
-    
-    // Create mock data for custom date range
-    const customData = {
-      revenueData: [
-        { month: formattedStart, totalRevenue: mockRevenue * 0.4, cumulativeRevenue: mockRevenue * 0.4 },
-        { month: formattedEnd, totalRevenue: mockRevenue * 0.6, cumulativeRevenue: mockRevenue },
-      ],
-      customerInsights: {
-        retentionRate: { value: 82, change: 3.5, increased: true },
-        churnRate: { value: 12, change: 1.7, increased: false },
-        avgAppointmentsPerDay: { value: 27, change: 3.8, increased: true },
-        pageViews: { value: 450, change: 7.2, increased: true },
-        newCustomers: { value: 18, change: 4.8, increased: true },
-        averageBill: { value: 1350, change: 3.9, increased: true },
-        totalRevenue: { value: "₹ 24,300", change: 5.1, increased: true },
-        totalAppointments: { value: "189", change: 3.2, increased: true }
-      }
-    };
-    
-    // Update the data state
-    allData.custom = customData;
-    setCurrentData(customData);
+  // Handle custom date range change
+  const handleDateRangeChange = (startDate, endDate) => {
+    // If we have a valid date range
+    if (startDate && endDate) {
+      // Generate custom data based on the selected date range
+      const generatedData = generateCustomData(startDate, endDate);
+      
+      // Update the data state
+      allData.custom = generatedData;
+      setCurrentData(generatedData);
+      setCustomDateApplied(true);
+    }
   };
 
   // Handle time filter change
@@ -287,14 +345,8 @@ export default function SalonDashboard() {
               onChange={handleTimeFilterChange}
             />
             
-            {showDatePicker && (
-              <DateRangePicker 
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
-                onApply={handleApplyDateRange}
-              />
+            {timeFilter === 'custom' && (
+              <CustomDateRangeComponent onDateRangeChange={handleDateRangeChange} />
             )}
           </div>
         </div>
@@ -318,15 +370,15 @@ export default function SalonDashboard() {
           <InsightCard 
             icon={<Users size={20} />} 
             title="Customer Retention Rate" 
-            value={`${currentData.customerInsights.retentionRate.value}pts`} 
-            change={currentData.customerInsights.retentionRate.change} 
+            value={`${currentData.customerInsights.retentionRate.value}%`} 
+            change={`${currentData.customerInsights.retentionRate.change}pts` }
             increased={currentData.customerInsights.retentionRate.increased} 
           />
           <InsightCard 
             icon={<UserPlus size={20} />} 
             title="Churn Rate" 
-            value={`${currentData.customerInsights.churnRate.value}pts`} 
-            change={currentData.customerInsights.churnRate.change} 
+            value={`${currentData.customerInsights.churnRate.value}%`} 
+            change={`${currentData.customerInsights.churnRate.change}pts` }
             increased={currentData.customerInsights.churnRate.increased} 
           />
           <InsightCard 
@@ -393,13 +445,13 @@ export default function SalonDashboard() {
           {/* Top Categories */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Top Categories</h2>
-            <TopCategories timeFilter={timeFilter} />
+            <TopCategories timeFilter={timeFilter} customDateApplied={customDateApplied} />
           </div>
 
           {/* Funnel Chart */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Conversion Funnel</h2>
-            <ConversionFunnel timeFilter={timeFilter} />
+            <ConversionFunnel timeFilter={timeFilter} customDateApplied={customDateApplied} />
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import React from "react";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 // Mock data with consistent colors
 const mockData = {
@@ -27,9 +27,7 @@ const mockData = {
 };
 
 export default function TopCategories() {
-  // Using only 'All time' data without filters
   const data = mockData['All time'];
-
   const total = data.reduce((sum, item) => sum + item.value, 0);
 
   return (
@@ -39,7 +37,6 @@ export default function TopCategories() {
           <h2 className="text-xl font-semibold text-gray-800">Top 5 Popular Services</h2>
         </div>
 
-        {/* Increased chart height and made it full width */}
         <div className="w-full h-80">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
@@ -56,20 +53,16 @@ export default function TopCategories() {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <text
-                x="50%"
-                y="50%"
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="text-xl font-semibold text-gray-700"
-              >
-                {total}%
-              </text>
+              {/* Tooltip on hover */}
+              <Tooltip
+                contentStyle={{ backgroundColor: 'white', borderRadius: '0.5rem', border: '1px solid #e5e7eb' }}
+                formatter={(value, name) => [`${value}%`, name]}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
-        
-        {/* Legend moved below chart */}
+
+        {/* Legend below chart */}
         <div className="mt-6 flex justify-center">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             {data.map((item, index) => (

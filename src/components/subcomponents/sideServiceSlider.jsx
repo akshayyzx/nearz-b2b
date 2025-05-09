@@ -374,7 +374,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose, na
             <p className="text-sm"><span className="font-medium">Customer:</span> {customerName}</p>
             <p className="text-sm"><span className="font-medium">Phone:</span> {metadata.user?.mobile || 'N/A'}</p>
             <p className="text-sm"><span className="font-medium">Service:</span> {serviceName || (metadata.salon_services && metadata.salon_services[0]?.service_name) || 'N/A'}</p>
-            <p className="text-sm"><span className="font-medium">Service ID:</span> {metadata.salon_services && metadata.salon_services[0]?.id || 'N/A'}</p>
+            {/* <p className="text-sm"><span className="font-medium">Service ID:</span> {metadata.salon_services && metadata.salon_services[0]?.id || 'N/A'}</p> */}
             <p className="text-sm"><span className="font-medium">Category:</span> {metadata.category || (metadata.salon_services && metadata.salon_services[0]?.category_name) || 'N/A'}</p>
             <p className="text-sm"><span className="font-medium">Amount:</span> ₹{metadata.amount || metadata.price || 'N/A'}</p>
             {metadata.discount > 0 && (
@@ -633,7 +633,7 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose, na
                   {/* Close button */}
                   <button
                     onClick={() => setShowPopup(false)}
-                    className="bg-red-500 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded w-full transition"
+                    className="bg-red-500 hover:bg-gray-300 text-white px-4 py-2 rounded w-full transition"
                   >
                     Close
                   </button>

@@ -51,6 +51,20 @@ const Sidebar = ({ onSelectView, activeView }) => {
         onClick={() => onSelectView('appointments')}
         showTooltip={true}
       />
+        <SidebarIcon 
+          icon={<BookOpen size={20}/>} 
+          label="Billing History"
+          active={activeView === 'billing history'}
+        onClick={() => onSelectView('billing history')}
+          showTooltip={true}
+        />
+        <SidebarIcon 
+          icon={<Megaphone size={20} />} 
+          label ="campaign"
+          active={activeView === 'campaign'}
+          onClick={() => onSelectView('campaign')}
+          showTooltip={true}
+        />
       <SidebarIcon 
         icon={<Settings size={20} className="opacity-40" />}
         showTooltip={false}
@@ -58,15 +72,7 @@ const Sidebar = ({ onSelectView, activeView }) => {
       
       {/* Other sidebar icons with opacity 40% and no tooltips */}
       <SidebarIcon 
-        icon={<BookOpen size={20} className="opacity-40" />} 
-        showTooltip={false}
-      />
-      <SidebarIcon 
         icon={<User size={20} className="opacity-40" />} 
-        showTooltip={false}
-      />
-      <SidebarIcon 
-        icon={<Megaphone size={20} className="opacity-40" />} 
         showTooltip={false}
       />
       <SidebarIcon 

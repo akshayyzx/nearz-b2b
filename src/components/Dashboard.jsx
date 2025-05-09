@@ -5,6 +5,8 @@ import Insights from '../components/subcomponents/insights';
 import UserSegmentation from '../components/subcomponents/userSegmentation';
 import AppointmentsList from './subcomponents/Appointments.jsx';
 import GrowthMetrics from './subcomponents/GrowthMetrics.jsx'
+import BillingHistory from './subcomponents/BillingHistory.jsx';
+import Campaign from './subcomponents/Campaign.jsx'
 
 
 const Dashboard = () => {
@@ -26,6 +28,10 @@ const Dashboard = () => {
         return <UserSegmentation />;
       case 'appointments':
         return <AppointmentsList/>;
+      case 'billing history':
+        return <BillingHistory/>;
+        case 'campaign':
+          return <Campaign/>
       default:
         return <div className="text-white p-4">Select a page</div>;
     }
