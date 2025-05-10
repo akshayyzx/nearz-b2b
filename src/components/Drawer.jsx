@@ -59,11 +59,11 @@ const Sidebar = ({ onSelectView, activeView }) => {
           showTooltip={true}
         />
         <SidebarIcon 
-          icon={<Megaphone size={20} />} 
-          label ="campaign"
-          active={activeView === 'campaign'}
-          onClick={() => onSelectView('campaign')}
-          showTooltip={true}
+          icon={<Megaphone size={20} className="opacity-40"/>} 
+          // label ="campaign"
+          // active={activeView === 'campaign'}
+          // onClick={() => onSelectView('campaign')}
+          showTooltip={false}
         />
       <SidebarIcon 
         icon={<Settings size={20} className="opacity-40" />}

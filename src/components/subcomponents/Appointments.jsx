@@ -10,14 +10,16 @@ import {
   Clock,
   BarChart3
 } from "lucide-react";
-import AppointmentHistory from "./BillingHistory";
+
 import CustomDateRangeComponent from "./CustomDateRangeComponent"; // Import the existing date picker
+import ServiceCategory from '../../utils/serviceCategories'
 
 const AppointmentsDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -38,13 +40,13 @@ const AppointmentsDashboard = () => {
         if (data && Array.isArray(data)) {
           setAppointments(data);
           setFilteredAppointments(data); // Initialize filtered to all appointments
-  
           calculateStats(data);
         } else {
           console.error("Unexpected API response structure:", data);
           setError("Appointments data is not in the expected format.");
         }
       } catch (err) {
+        console.error("Error fetching appointments:", err);
         setError(err.message || "Failed to load appointments.");
       } finally {
         setLoading(false);
@@ -68,8 +70,37 @@ const AppointmentsDashboard = () => {
     setStats(calculatedStats);
   };
 
+  // Extract service categories from appointment data
+  const calculateServiceCategories = (appointmentData) => {
+    // Create a map to count service occurrences
+    const serviceCount = {};
+    
+    appointmentData.forEach(appointment => {
+      if (appointment.service) {
+        // Increment counter for this service type
+        serviceCount[appointment.service] = (serviceCount[appointment.service] || 0) + 1;
+      }
+    });
+    
+    // Convert to array of objects and sort by count (descending)
+    const sortedServices = Object.keys(serviceCount)
+      .map(name => ({ name, value: serviceCount[name] }))
+      .sort((a, b) => b.value - a.value);
+      
+    // Return top services (limit to 6 for display purposes)
+    return sortedServices.slice(0, 6);
+  };
+  
+  // Get service categories from filtered appointments
+  const serviceCategories = calculateServiceCategories(filteredAppointments);
+
   // Handle date range changes from the CustomDateRangeComponent
-  const handleDateRangeChange = (startDate, endDate, customData) => {
+  const handleDateRangeChange = (startDate, endDate) => {
+    console.log("Date range changed:", startDate, endDate);
+    
+    // Save the current date range
+    setDateRange({ startDate, endDate });
+    
     // If no date range is selected (reset), show all appointments
     if (!startDate || !endDate) {
       setFilteredAppointments(appointments);
@@ -79,14 +110,21 @@ const AppointmentsDashboard = () => {
 
     // Filter appointments based on date range
     const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0); // Start from beginning of start date
+    
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999); // Include the entire end date
 
+    console.log("Filtering appointments between:", start, "and", end);
+    
     const filtered = appointments.filter(appointment => {
+      if (!appointment.date) return false;
+      
       const appointmentDate = new Date(appointment.date);
       return appointmentDate >= start && appointmentDate <= end;
     });
 
+    console.log("Filtered appointments:", filtered.length);
     setFilteredAppointments(filtered);
     calculateStats(filtered);
   };
@@ -107,16 +145,6 @@ const AppointmentsDashboard = () => {
         return "#6B7280"; // gray
     }
   };
-
-  // Service category data (placeholder)
-  const serviceCategories = [
-    { name: "Haircut", value: 12 },
-    { name: "Styling", value: 8 },
-    { name: "Color", value: 6 },
-    { name: "Facial", value: 15 },
-    { name: "Manicure", value: 10 },
-    { name: "Pedicure", value: 9 }
-  ];
 
   if (loading)
     return (
@@ -145,17 +173,25 @@ const AppointmentsDashboard = () => {
     );
 
   return (
-    <div className="w-full mx-auto p-4 sm:p-6 ">
-      <div className="flex justify-between items-center mb-8 w-[1350px]">
-  <h2 className="text-3xl font-bold text-[#F25435]">
-    Appointments Dashboard
-  </h2>
-  
-  {/* Date Filter Component */}
-  <div className=" p-4 border border-gray-100">
-    <CustomDateRangeComponent onDateRangeChange={handleDateRangeChange} />
-  </div>
-</div>
+    <div className=" mx-auto p-4 sm:p-6 w-[1350px]">
+      <div className="flex justify-between items-center mb-8 w-full w-[1350px]">
+        <h2 className="text-3xl font-bold text-[#F25435]">
+          Appointments Dashboard
+        </h2>
+      </div>
+      
+      {/* Date Filter Component - Full Width */}
+      <div className="p-4 mb-8 border border-gray-100 bg-white rounded-lg shadow-sm">
+        <div className="flex items-center space-x-2 mb-2">
+          <Calendar size={16} className="text-gray-600" />
+          <span className="text-sm font-medium text-gray-700">Filter by date:</span>
+        </div>
+        <CustomDateRangeComponent 
+          onDateRangeChange={handleDateRangeChange} 
+          initialStartDate={dateRange.startDate}
+          initialEndDate={dateRange.endDate}
+        />
+      </div>
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -208,16 +244,30 @@ const AppointmentsDashboard = () => {
         </div>
       </div>
 
+      {/* Filter Status Display */}
+      {dateRange.startDate && dateRange.endDate && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+          <div className="flex items-center text-blue-700">
+            <Calendar size={16} className="mr-2" />
+            <span className="text-sm font-medium">
+              Showing appointments from {new Date(dateRange.startDate).toLocaleDateString()} to {new Date(dateRange.endDate).toLocaleDateString()}
+            </span>
+            <button 
+              className="ml-auto text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded transition-colors"
+              onClick={() => handleDateRangeChange(null, null)}
+            >
+              Clear filter
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Visualization Section */}
       <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Chart */}
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-gray-800 text-lg">Appointments By Status</h3>
-            <div className="flex items-center text-indigo-600 text-sm font-medium cursor-pointer">
-              <span>View Details</span>
-              <ChevronRight size={16} className="ml-1" />
-            </div>
           </div>
           <div className="flex justify-center">
             <div className="w-48 h-48 rounded-full relative flex items-center justify-center"
@@ -273,27 +323,8 @@ const AppointmentsDashboard = () => {
         <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 hover:shadow-xl transition-all duration-300">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-semibold text-gray-800 text-lg">Service Categories</h3>
-            <div className="flex items-center text-indigo-600 text-sm font-medium cursor-pointer">
-              <span>View Details</span>
-              <ChevronRight size={16} className="ml-1" />
-            </div>
           </div>
-          <div className="space-y-4">
-            {serviceCategories.map((service, index) => (
-              <div key={index} className="relative">
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-700">{service.name}</span>
-                  <span className="text-sm font-medium text-gray-700">{service.value}</span>
-                </div>
-                <div className="w-full bg-gray-100 rounded-full h-2.5">
-                  <div 
-                    className="bg-indigo-600 h-2.5 rounded-full" 
-                    style={{width: `${(service.value / Math.max(...serviceCategories.map(s => s.value))) * 100}%`}}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ServiceCategory appointmentData={filteredAppointments} />
         </div>
       </div>
     </div>

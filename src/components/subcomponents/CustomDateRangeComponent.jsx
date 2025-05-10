@@ -1,197 +1,267 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, X } from 'lucide-react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { Calendar, Clock, BarChart, BarChart3, Calendar as CalendarIcon } from 'lucide-react';
 
-const CustomDateRangeComponent = ({ onDateRangeChange }) => {
-  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [customDateActive, setCustomDateActive] = useState(false);
-  const [viewType, setViewType] = useState('monthly');
-  const [customData, setCustomData] = useState(null);
+const CustomDateRangeComponent = ({ onDateRangeChange, initialStartDate = null, initialEndDate = null }) => {
+  const [startDate, setStartDate] = useState(initialStartDate ? new Date(initialStartDate) : null);
+  const [endDate, setEndDate] = useState(initialEndDate ? new Date(initialEndDate) : null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('custom'); // 'daily', 'weekly', 'monthly', 'yearly', 'custom'
 
-  // Today's date to set max date for datepicker
-  const today = new Date().toISOString().split('T')[0];
-
+  // Update local state if props change (e.g., when filter is cleared externally)
   useEffect(() => {
-    if (customDateActive && startDate && endDate) {
-      // Generate custom data when custom date is active
-      const newCustomData = generateCustomData(startDate, endDate);
-      setCustomData(newCustomData);
-      
-      // Call the parent callback with the new date range
-      onDateRangeChange && onDateRangeChange(startDate, endDate, newCustomData);
+    setStartDate(initialStartDate ? new Date(initialStartDate) : null);
+    setEndDate(initialEndDate ? new Date(initialEndDate) : null);
+  }, [initialStartDate, initialEndDate]);
+
+  // Handle date changes
+  const handleStartDateChange = (date) => {
+    setStartDate(date);
+    setActiveFilter('custom');
+    // If end date is before the new start date, adjust it
+    if (endDate && date > endDate) {
+      setEndDate(date);
     }
-  }, [customDateActive, startDate, endDate]);
-
-  // Format date for display
-  const formatDateForDisplay = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Reset custom date selection
-  const resetCustomDate = () => {
-    setStartDate('');
-    setEndDate('');
-    setCustomDateActive(false);
-    setCustomData(null);
-    setIsCustomDateOpen(false);
-    setViewType('monthly');
-    onDateRangeChange && onDateRangeChange(null, null, null);
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
+    setActiveFilter('custom');
   };
 
-  // Apply custom date filter
-  const applyCustomDateFilter = () => {
+  // Apply the filter when both dates are selected
+  useEffect(() => {
     if (startDate && endDate) {
-      setCustomDateActive(true);
-      setIsCustomDateOpen(false);
-      // No need to generate data here as useEffect will handle it
+      onDateRangeChange(startDate, endDate);
     }
+  }, [startDate, endDate]);
+
+  // Handle predefined periods
+  const handlePredefinedPeriod = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    setStartDate(start);
+    setEndDate(end);
+    setActiveFilter('custom');
+    onDateRangeChange(start, end);
   };
 
-  // Handle view type change
-  const handleViewTypeChange = (value) => {
-    if (value === "") return; // Handle placeholder selection
-    
-    if (value === "custom") {
-      setIsCustomDateOpen(true);
-    } else {
-      setViewType(value);
-      setCustomDateActive(false);
-      setCustomData(null);
-      onDateRangeChange && onDateRangeChange(null, null, null);
-    }
+  // Clear the filter
+  const handleClearFilter = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setActiveFilter('custom');
+    onDateRangeChange(null, null);
   };
 
-  // Generate synthetic data based on date range - this is an example function
-  // You should replace this with your actual data generation or fetching logic
-  const generateCustomData = (start, end) => {
-    const startDateTime = new Date(start).getTime();
-    const endDateTime = new Date(end).getTime();
-    const daysDiff = Math.ceil((endDateTime - startDateTime) / (1000 * 60 * 60 * 24)) + 1;
+  // Handle daily filter
+  const handleDailyFilter = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    // Generate date labels
-    const labels = [];
-    const currentDate = new Date(start);
-    for (let i = 0; i < daysDiff; i++) {
-      labels.push(currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
     
-    // This is a placeholder function that returns mock data
-    // Replace with your actual data generation or fetching logic
-    return {
-      labels: labels,
-      daysDiff: daysDiff,
-      startDate: start,
-      endDate: end
-      // Add more data properties as needed
-    };
+    setStartDate(today);
+    setEndDate(end);
+    setActiveFilter('daily');
+    onDateRangeChange(today, end);
+  };
+
+  // Handle weekly filter
+  const handleWeeklyFilter = () => {
+    const today = new Date();
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    
+    // Find the first day of the current week (Sunday)
+    const start = new Date(today);
+    const day = start.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    start.setDate(start.getDate() - day); // Go back to the first day of the week
+    start.setHours(0, 0, 0, 0);
+    
+    setStartDate(start);
+    setEndDate(end);
+    setActiveFilter('weekly');
+    onDateRangeChange(start, end);
+  };
+
+  // Handle monthly filter
+  const handleMonthlyFilter = () => {
+    const today = new Date();
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    
+    // Find the first day of the current month
+    const start = new Date(today.getFullYear(), today.getMonth(), 1);
+    start.setHours(0, 0, 0, 0);
+    
+    setStartDate(start);
+    setEndDate(end);
+    setActiveFilter('monthly');
+    onDateRangeChange(start, end);
+  };
+
+  // Handle yearly filter
+  const handleYearlyFilter = () => {
+    const today = new Date();
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    
+    // Find the first day of the current year
+    const start = new Date(today.getFullYear(), 0, 1);
+    start.setHours(0, 0, 0, 0);
+    
+    setStartDate(start);
+    setEndDate(end);
+    setActiveFilter('yearly');
+    onDateRangeChange(start, end);
   };
 
   return (
-    <div className="w-full">
-      {/* Time Period Filter */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <div className="relative inline-block">
-          <select
-            value={customDateActive ? "custom" : viewType}
-            onChange={(e) => handleViewTypeChange(e.target.value)}
-            className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm min-w-40"
-          >
-            {/* <option value="" disabled>ViewType</option> */}
-            <option value="daily">Daily</option>
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-            <option value="custom">Custom Date Range</option>
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-              <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-            </svg>
-          </div>
-        </div>
+    <div className="relative">
+      {/* Filter Tabs */}
+      <div className="flex mb-4 border-b border-gray-200">
+        <button
+          onClick={handleDailyFilter}
+          className={`flex items-center px-4 py-2 text-sm font-medium ${activeFilter === 'daily' 
+            ? 'text-blue-600 border-b-2 border-blue-600' 
+            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          <Clock size={16} className="mr-1" />
+          Daily
+        </button>
+        <button
+          onClick={handleWeeklyFilter}
+          className={`flex items-center px-4 py-2 text-sm font-medium ${activeFilter === 'weekly' 
+            ? 'text-blue-600 border-b-2 border-blue-600' 
+            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          <BarChart size={16} className="mr-1" />
+          Weekly
+        </button>
+        <button
+          onClick={handleMonthlyFilter}
+          className={`flex items-center px-4 py-2 text-sm font-medium ${activeFilter === 'monthly' 
+            ? 'text-blue-600 border-b-2 border-blue-600' 
+            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          <BarChart3 size={16} className="mr-1" />
+          Monthly
+        </button>
+        <button
+          onClick={handleYearlyFilter}
+          className={`flex items-center px-4 py-2 text-sm font-medium ${activeFilter === 'yearly' 
+            ? 'text-blue-600 border-b-2 border-blue-600' 
+            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          <CalendarIcon size={16} className="mr-1" />
+          Yearly
+        </button>
       </div>
 
-      {/* Date Range Display (when custom date is active) */}
-      {customDateActive && (
-        <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6 inline-flex items-center">
-          <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
-          <span className="text-sm font-medium text-indigo-700">
-            {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
-          </span>
-          <button 
-            onClick={resetCustomDate}
-            className="ml-2 text-indigo-600 hover:text-indigo-800"
-          >
-            <X className="h-4 w-4" />
-          </button>
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Start Date Picker */}
+        <div className="relative">
+          <DatePicker
+            selected={startDate}
+            onChange={handleStartDateChange}
+            selectsStart
+            startDate={startDate}
+            endDate={endDate}
+            maxDate={new Date()}
+            placeholderText="Start Date"
+            dateFormat="dd/MM/yyyy"
+            className="bg-white border border-gray-300 px-3 py-2 rounded-md text-sm w-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <Calendar size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
         </div>
-      )}
-      
-      {/* Custom Date Range Picker Dialog */}
-      {isCustomDateOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-lg relative border-2 border-indigo-600">
-            {/* Close button */}
-            <button
-              onClick={() => setIsCustomDateOpen(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none"
-              aria-label="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-            </button>
-            
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Date Range</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  max={endDate || today}
-                  value={startDate || ''}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-                <input
-                  type="date"
-                  min={startDate}
-                  max={today}
-                  value={endDate || ''}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
+        
+        <span className="text-gray-500">to</span>
+        
+        {/* End Date Picker */}
+        <div className="relative">
+          <DatePicker
+            selected={endDate}
+            onChange={handleEndDateChange}
+            selectsEnd
+            startDate={startDate}
+            endDate={endDate}
+            minDate={startDate}
+            maxDate={new Date()}
+            placeholderText="End Date"
+            dateFormat="dd/MM/yyyy"
+            className="bg-white border border-gray-300 px-3 py-2 rounded-md text-sm w-32 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+          />
+          <Calendar size={16} className="absolute right-3 top-3 text-gray-400 pointer-events-none" />
+        </div>
+        
+        {/* Quick Select Dropdown */}
+        <div className="relative">
+          <button 
+            onClick={() => setIsOpen(!isOpen)}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-2 rounded-md text-sm transition-colors"
+          >
+            Quick Select
+          </button>
+          
+          {isOpen && (
+            <div className="absolute mt-1 right-0 z-10 w-48 bg-white rounded-md shadow-lg border border-gray-200">
+              <div className="py-1">
                 <button
-                  onClick={() => setIsCustomDateOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition duration-150"
+                  onClick={() => {
+                    handlePredefinedPeriod(7);
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Cancel
+                  Last 7 days
                 </button>
                 <button
-                  onClick={applyCustomDateFilter}
-                  disabled={!startDate || !endDate}
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition duration-150 ${
-                    !startDate || !endDate
-                      ? 'bg-indigo-300 text-white cursor-not-allowed'
-                      : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                  }`}
+                  onClick={() => {
+                    handlePredefinedPeriod(30);
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  Apply
+                  Last 30 days
+                </button>
+                <button
+                  onClick={() => {
+                    handlePredefinedPeriod(90);
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Last 90 days
+                </button>
+                <button
+                  onClick={() => {
+                    handleClearFilter();
+                    setIsOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                >
+                  Clear Filter
                 </button>
               </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Reset Filter Button */}
+        {(startDate || endDate) && (
+          <button
+            onClick={handleClearFilter}
+            className="text-sm text-red-600 hover:text-red-700 ml-2"
+          >
+            Reset
+          </button>
+        )}
+      </div>
     </div>
   );
 };

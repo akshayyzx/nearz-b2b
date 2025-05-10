@@ -189,6 +189,8 @@ const BillingHistory = ({ onUpdateStats }) => {
     setSearchQuery(e.target.value);
   };
 
+  
+
   const handleDateRangeChange = (startDate, endDate, customData) => {
     if (!startDate || !endDate) {
       // Reset to default filtered appointments by tab

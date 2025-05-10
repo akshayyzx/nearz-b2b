@@ -6,7 +6,8 @@ const SignUpForm = ({ onSignupSuccess }) => {
   const [phone, setPhone] = useState("");
   const [referralCode, setReferralCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [name, setName] = useState(""); // To handle the name input
+  const [name, setName] = useState(""); 
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,11 +21,19 @@ const SignUpForm = ({ onSignupSuccess }) => {
       // Store the user's name in localStorage
       localStorage.setItem("userName", name);
       
-      // Also store the phone number for reference
-      // localStorage.setItem("userPhone", normalizedPhone);
+      // Set success state
+      setSignupSuccess(true);
       
+      // Call the success callback with the phone number
       onSignupSuccess(normalizedPhone);
-      alert("Signup successful!");
+      
+      // Redirect to login page after a short delay
+      setTimeout(() => {
+        // Replace with your actual navigation method
+        window.location.href = "/login";
+        // If using React Router, you would use:
+        // navigate("/login");
+      }, 1500);
     } catch (error) {
       alert("Signup failed.");
     } finally {
@@ -105,9 +114,15 @@ const SignUpForm = ({ onSignupSuccess }) => {
             />
           </div>
 
+          {signupSuccess && (
+            <div className="mb-4 p-2 bg-green-100 text-green-700 rounded-lg text-center">
+              Signup successful! Redirecting to login page...
+            </div>
+          )}
+
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || signupSuccess}
             className="w-full py-3 bg-[#DD4F2E] text-white font-semibold rounded-lg hover:bg-[#C9381E] focus:outline-none focus:ring-2 focus:ring-[#DD4F2E] disabled:bg-gray-400 transition-colors"
           >
             {isLoading ? "Signing Up…" : "Sign Up"}

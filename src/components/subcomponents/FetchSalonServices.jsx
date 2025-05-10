@@ -19,8 +19,16 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [userName, setUserName] = useState("");
-const [phoneNumber, setPhoneNumber] = useState("");
-
+  const [discount,setDiscount]=useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  
+  // Search functionality
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredServices, setFilteredServices] = useState([]);
+  
+  // Validation error states
+  const [timeSlotError, setTimeSlotError] = useState("");
+  const [userDetailsError, setUserDetailsError] = useState("");
 
   // Initial data fetch - salon ID and services
   useEffect(() => {
@@ -30,6 +38,7 @@ const [phoneNumber, setPhoneNumber] = useState("");
         const { salonId, services } = await salonApiService.fetchSalonData();
         setSalonId(salonId);
         setSalonServices(services);
+        setFilteredServices(services);
         
         // If there are services, expand the first category by default
         const categories = getServiceCategories(services);
@@ -73,6 +82,36 @@ const [phoneNumber, setPhoneNumber] = useState("");
     setTotalDuration(duration);
   }, [pendingAppointments]);
 
+  // Clear validation errors when respective fields change
+  useEffect(() => {
+    if (selectedSlot) setTimeSlotError("");
+  }, [selectedSlot]);
+
+  useEffect(() => {
+    // Clear user details error as soon as the user starts typing
+    if (userName || phoneNumber) setUserDetailsError("");
+  }, [userName, phoneNumber]);
+
+  // Filter services based on search term
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredServices(salonServices);
+    } else {
+      const filtered = salonServices.filter(service => 
+        service.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredServices(filtered);
+      
+      // Expand all categories when searching
+      if (filtered.length > 0) {
+        const categories = getServiceCategories(filtered);
+        if (categories.length > 0) {
+          setExpandedCategory(categories[0]);
+        }
+      }
+    }
+  }, [searchTerm, salonServices]);
+
   // Extract unique service categories
   const getServiceCategories = (services) => {
     const categories = new Set();
@@ -82,7 +121,7 @@ const [phoneNumber, setPhoneNumber] = useState("");
 
   // Get services filtered by category
   const getServicesByCategory = (category) => {
-    return salonServices.filter(service => service.category === category);
+    return filteredServices.filter(service => service.category === category);
   };
 
   // Toggle category expansion in services accordion
@@ -106,12 +145,18 @@ const [phoneNumber, setPhoneNumber] = useState("");
       slotId: slot.id
     });
     setPendingAppointments([]);
+    setTimeSlotError(""); // Clear any time slot error
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
   };
 
   // Add service to pending appointments
   const handleAddService = (service) => {
     if (!selectedSlot) {
-      alert("Please select a time slot first");
+      setTimeSlotError("Please select a time slot first");
       return;
     }
     
@@ -171,12 +216,30 @@ const [phoneNumber, setPhoneNumber] = useState("");
     setPendingAppointments(newAppointments);
   };
 
+  // Validate and confirm all appointments
+  const validateAndConfirm = async () => {
+    // Clear previous errors
+    setTimeSlotError("");
+    setUserDetailsError("");
+    
+    let isValid = true;
+    
+    // Check for user details
+    if (!userName) {
+      setUserDetailsError("Please enter your name.");
+      isValid = false;
+    } else if (phoneNumber.length !== 10) {
+      setUserDetailsError("Please enter a valid 10-digit phone number.");
+      isValid = false;
+    }
+    
+    return isValid;
+  };
+
   // Confirm all appointments
   const handleConfirmAllAppointments = async () => {
-    if (!userName || phoneNumber.length !== 10) {
-      alert("Please enter a valid name and 10-digit phone number.");
-      return;
-    }
+    const isValid = await validateAndConfirm();
+    if (!isValid) return;
     
     const formattedPhone = phoneNumber.startsWith("+91")
       ? phoneNumber
@@ -199,11 +262,10 @@ const [phoneNumber, setPhoneNumber] = useState("");
       
       setPendingAppointments([]);
       
-      // Use a custom alert that calls fetchAppointments when dismissed
       const alertResult = window.confirm("Appointments booked successfully!");
       
       // This code runs after they click OK on the alert
-       // Refresh the calendar data
+      // Refresh the calendar data
       onClose(); // Close the sidebar
       
     } catch (error) {
@@ -211,8 +273,6 @@ const [phoneNumber, setPhoneNumber] = useState("");
     }
   };
   
-  
-
   // Generate calendar date cells for date picker
   const generateCalendarDays = () => {
     const today = moment();
@@ -274,25 +334,47 @@ const [phoneNumber, setPhoneNumber] = useState("");
       <div className="container mx-auto py-6 px-4">
         <h1 className="text-2xl font-bold mb-6">Salon Appointment Booking</h1>
         <div className="bg-white p-4 rounded shadow mb-4">
-  <h2 className="text-lg font-semibold mb-2">Your Details</h2>
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-    <input
-      type="text"
-      placeholder="Your Name"
-      value={userName}
-      onChange={(e) => setUserName(e.target.value)}
-      className="px-3 py-2 border rounded w-full"
-    />
-    <input
-      type="tel"
-      placeholder="10-digit Phone"
-      value={phoneNumber}
-      onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ""))}
-      maxLength={10}
-      className="px-3 py-2 border rounded w-full"
-    />
-  </div>
-</div>
+          <h2 className="text-lg font-semibold mb-2">Customer's Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={userName}
+                onChange={(e) => {
+                  setUserName(e.target.value);
+                  if (userDetailsError) setUserDetailsError("");
+                }}
+                className={`px-3 py-2 border rounded w-full ${userDetailsError ? 'border-red-500' : ''}`}
+              />
+            </div>
+            <div>
+              <input
+                type="tel"
+                placeholder="10-digit Phone"
+                value={phoneNumber}
+                onChange={(e) => {
+                  setPhoneNumber(e.target.value.replace(/\D/g, ""));
+                  if (userDetailsError) setUserDetailsError("");
+                }}
+                maxLength={10}
+                className={`px-3 py-2 border rounded w-full ${userDetailsError ? 'border-red-500' : ''}`}
+              />
+            </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Discount"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value.replace(/[^\d.]/g, ""))}
+                className="px-3 py-2 border rounded w-full"
+              />
+            </div>
+          </div>
+          {userDetailsError && (
+            <p className="text-red-500 text-xs mt-2">{userDetailsError}</p>
+          )}
+        </div>
 
       
         {/* Selected Information Summary */}
@@ -306,49 +388,55 @@ const [phoneNumber, setPhoneNumber] = useState("");
           </div>
         )}
 
-               {/* Time Range Slider Component */}
-               <div className="bg-white rounded-lg shadow-md p-6 mb-6 w-[600px]">
-  <h2 className="text-lg font-medium mb-5">Select Time Range</h2>
-  
-  {loadingSlots ? (
-    <div className="flex items-center justify-center p-4">
-      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-      <span className="ml-2 text-sm text-gray-600">Loading available times...</span>
-    </div>
-  ) : timeSlots.length === 0 ? (
-    <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md">
-      No time slots available for {moment(selectedDate).format("MMMM D, YYYY")}.
-    </div>
-  ) : (
-    <>
-      {/* Horizontal Scrollable Time Slots - Widened */}
-      <div className="flex overflow-x-auto space-x-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent w-[550px]">
-        {timeSlots.map((slot, index) => {
-          const isSelected = selectedSlot?.formattedTime === slot.from;
-          return (
-            <button
-              key={index}
-              onClick={() => handleSlotSelect(slot)}
-              className={`min-w-[90px] px-3 py-2 border text-sm rounded-md text-gray-800 font-medium
-                ${isSelected ? 'bg-green-50 border-green-500 text-green-600 font-semibold shadow-sm' : 'border-gray-300'}
-                transition-colors duration-150`}
-            >
-              {slot.from}
-            </button>
-          );
-        })}
-      </div>
-      
-      {/* Progress line (below slots) */}
-      <div className="relative h-2 bg-gray-200 rounded-full mx-2 my-4">
-        <div 
-          className="absolute top-0 left-0 h-2 bg-gray-500 rounded-full" 
-          style={{ width: `${((timeSlots.findIndex(slot => slot.from === selectedSlot?.formattedTime) + 1) / timeSlots.length) * 100}%` }}
-        ></div>
-      </div>
-    </>
-  )}
-</div>
+        {/* Time Range Slider Component */}
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6 w-[600px]">
+          <h2 className="text-lg font-medium mb-5">Select Time Range</h2>
+          
+          {loadingSlots ? (
+            <div className="flex items-center justify-center p-4">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+              <span className="ml-2 text-sm text-gray-600">Loading available times...</span>
+            </div>
+          ) : timeSlots.length === 0 ? (
+            <div className="bg-yellow-50 text-yellow-800 p-4 rounded-md">
+              No time slots available for {moment(selectedDate).format("MMMM D, YYYY")}.
+            </div>
+          ) : (
+            <>
+              {/* Horizontal Scrollable Time Slots - Widened */}
+              <div className="flex overflow-x-auto space-x-3 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent w-[550px]">
+                {timeSlots.map((slot, index) => {
+                  const isSelected = selectedSlot?.formattedTime === slot.from;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => handleSlotSelect(slot)}
+                      className={`min-w-[90px] px-3 py-2 border text-sm rounded-md text-gray-800 font-medium
+                        ${isSelected ? 'bg-green-50 border-green-500 text-green-600 font-semibold shadow-sm' : 'border-gray-300'}
+                        ${timeSlotError ? 'border-red-300' : ''}
+                        transition-colors duration-150`}
+                    >
+                      {slot.from}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              {/* Time slot error message */}
+              {timeSlotError && (
+                <p className="text-red-500 text-xs mt-1">{timeSlotError}</p>
+              )}
+              
+              {/* Progress line (below slots) */}
+              <div className="relative h-2 bg-gray-200 rounded-full mx-2 my-4">
+                <div 
+                  className="absolute top-0 left-0 h-2 bg-gray-500 rounded-full" 
+                  style={{ width: `${((timeSlots.findIndex(slot => slot.from === selectedSlot?.formattedTime) + 1) / timeSlots.length) * 100}%` }}
+                ></div>
+              </div>
+            </>
+          )}
+        </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column: Calendar and Time Slots */}
@@ -411,51 +499,49 @@ const [phoneNumber, setPhoneNumber] = useState("");
               
               {/* Pending Appointments Section */}
               {pendingAppointments.length > 0 && (
-  <div className="mb-4">
-    <div className="flex justify-between items-center mb-2">
-      <h3 className="text-sm font-medium">
-        Selected Services ({pendingAppointments.length}) – Total Duration: {totalDuration} min
-      </h3>
-      <button
-        onClick={async () => {
-          if (!userName || phoneNumber.length !== 10) {
-            alert("Please enter a valid name and 10-digit phone number.");
-            return;
-          }
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-medium">
+                      Selected Services ({pendingAppointments.length}) – Total Duration: {totalDuration} min
+                    </h3>
+                    <button
+                      onClick={async () => {
+                        const isValid = await validateAndConfirm();
+                        if (!isValid) return;
 
-          const formattedPhone = phoneNumber.startsWith("+91")
-            ? phoneNumber
-            : `+91${phoneNumber}`;
+                        const formattedPhone = phoneNumber.startsWith("+91")
+                          ? phoneNumber
+                          : `+91${phoneNumber}`;
 
-          const userData = {
-            username: userName.trim(),
-            mobile: formattedPhone,
-          };
+                        const userData = {
+                          username: userName.trim(),
+                          mobile: formattedPhone,
+                        };
 
-          try {
-            await salonApiService.makeAppointment(
-              salonId,
-              selectedSlot.start,
-              totalDuration,
-              selectedSlot,
-              pendingAppointments,
-              userData
-            );
+                        try {
+                          await salonApiService.makeAppointment(
+                            salonId,
+                            selectedSlot.start,
+                            totalDuration,
+                            selectedSlot,
+                            pendingAppointments,
+                            userData
+                          );
 
-            setPendingAppointments([]);
-            alert("Appointments booked successfully!");
+                          setPendingAppointments([]);
+                          alert("Appointments booked successfully!");
 
-            await loadEvents(); // ✅ Load new appointments immediately
-            onClose(); // ✅ Close the sidebar/modal
-          } catch (error) {
-            alert(error.message);
-          }
-        }}
-        className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
-      >
-        Confirm All
-      </button>
-    </div>
+                          await loadEvents(); // ✅ Load new appointments immediately
+                          onClose(); // ✅ Close the sidebar/modal
+                        } catch (error) {
+                          alert(error.message);
+                        }
+                      }}
+                      className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+                    >
+                      Confirm All
+                    </button>
+                  </div>
                   
                   <ul className="bg-gray-50 rounded-lg border border-gray-200 divide-y divide-gray-200 mb-4">
                     {pendingAppointments.map((appointment) => (
@@ -483,11 +569,39 @@ const [phoneNumber, setPhoneNumber] = useState("");
                 </div>
               )}
               
+              {/* Search Bar for Services */}
+              <div className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search services..."
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    className="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
               {/* Services Accordion */}
               <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                {salonServices.length > 0 ? (
+                {filteredServices.length > 0 ? (
                   <div>
-                    {getServiceCategories(salonServices).map((category) => (
+                    {getServiceCategories(filteredServices).map((category) => (
                       <div key={category} className="border-b last:border-b-0">
                         <button
                           className="w-full p-2 flex justify-between items-center hover:bg-gray-50 focus:outline-none text-sm"
@@ -525,12 +639,11 @@ const [phoneNumber, setPhoneNumber] = useState("");
                                     </div>
                                     <button
                                       onClick={() => handleAddService(service)}
-                                      disabled={!selectedSlot}
                                       className={`text-xs px-2 py-1 rounded
                                         ${!selectedSlot 
                                           ? 'bg-gray-300 cursor-not-allowed' 
                                           : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                                    >
+                                      >
                                       Add
                                     </button>
                                   </div>
@@ -543,7 +656,7 @@ const [phoneNumber, setPhoneNumber] = useState("");
                     ))}
                   </div>
                 ) : (
-                  <p className="p-2 text-gray-500 text-sm">No services available.</p>
+                  <p className="p-4 text-gray-500 text-sm">No services matching "{searchTerm}". Try a different search term.</p>
                 )}
               </div>
             </div>

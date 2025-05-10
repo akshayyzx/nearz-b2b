@@ -121,11 +121,11 @@ const ViewBill = () => {
             onClick={handleBack}
             className="text-blue-600 underline"
           >
-            &lt; View Bill
+            &lt; Back
           </button>
-          {/* <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-500">
             Generated: {currentDateTime}
-          </div> */}
+          </div>
         </div>
 
         <h2 className="text-2xl font-bold text-center mb-4">{salon?.name || "Salon Name"}</h2>
@@ -138,7 +138,7 @@ const ViewBill = () => {
         <p className="mb-1"><strong>Invoice:</strong> {id || "N/A"}</p>
         <p className="mb-1"><strong>Service Date:</strong> {date || "N/A"}</p>
         <p className="mb-1"><strong>Invoice Generated on:</strong> {formattedDate} at {formattedTime}</p>
-        <p className="mb-1"><strong>Customer:</strong> {user?.username || "N/A"}</p>
+        <p className="mb-1"><strong>Customer:</strong> {user?.username || "Guest"}</p>
         <p className="mb-3"><strong>Contact:</strong> {user?.mobile || "N/A"}</p>
 
         <table className="w-full border border-gray-400 mb-4">
@@ -186,4 +186,4 @@ const ViewBill = () => {
   );
 };
 
-export default ViewBill;
+export default ViewBill;  

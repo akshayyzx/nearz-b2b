@@ -13,7 +13,7 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const MyCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState('week');
+  const [currentView, setCurrentView] = useState('month');
   const [eventList, setEventList] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
@@ -63,6 +63,8 @@ const loadEvents= useCallback(async () => {
       setIsLoadingEvents(false);
     }
   }, []);
+
+ 
 
   // Load events on mount
   useEffect(() => {
@@ -272,12 +274,12 @@ const loadEvents= useCallback(async () => {
         view={currentView}
         onNavigate={handleNavigate}
         onView={handleViewChange}
-        onEventDrop={handleEventDrop}
-        onEventResize={handleEventResize}
+        // onEventDrop={handleEventDrop}
+        // onEventResize={handleEventResize}
         selectable
         onSelectSlot={handleSelectSlot}
         onSelectEvent={handleSelectEvent}
-        draggableAccessor={event => !!event.isDraggable}
+        // draggableAccessor={event => !!event.isDraggable}
         resizable
         dayPropGetter={dayPropGetter}
         eventPropGetter={eventPropGetter}

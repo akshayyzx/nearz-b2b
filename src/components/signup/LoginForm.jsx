@@ -125,14 +125,14 @@ const LoginForm = ({ initialPhone = "", onLoginSuccess }) => {
           </form>
 
           {/* Don't have an account link */}
-          <div className="mt-6 text-center">
+          {/* <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
               <a href="/signup" className="text-[#DD4F2E] font-medium hover:underline">
                 Sign up
               </a>
             </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

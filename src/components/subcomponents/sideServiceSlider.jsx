@@ -558,12 +558,12 @@ const EventDetails = ({ event, updateEvent, deleteEvent, loadEvents, onClose, na
                       <h4 className="font-medium text-[#023E8A] mb-1">Service Details</h4>
                       {metadata.salon_services.map((service, index) => (
                         <div key={service.id || index} className="mb-3 p-2 bg-gray-50 rounded-lg">
-                          <p className="text-sm"><strong>Service ID:</strong> {service.id || 'N/A'}</p>
+                          {/* <p className="text-sm"><strong>Service ID:</strong> {service.id || 'N/A'}</p> */}
                           <p className="text-sm"><strong>Name:</strong> {service.service_name || 'N/A'}</p>
                           {service.custom_name && service.custom_name !== service.service_name && (
                             <p className="text-sm"><strong>Custom Name:</strong> {service.custom_name}</p>
                           )}
-                          <p className="text-sm"><strong>Category:</strong> {service.category_name || 'N/A'}</p>
+                          <p className="text-sm"><strong>Category:</strong> {service.category || 'N/A'}</p>
                           <p className="text-sm"><strong>Amount:</strong> ₹{service.amount || 'N/A'}</p>
                         </div>
                       ))}

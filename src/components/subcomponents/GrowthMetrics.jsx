@@ -33,6 +33,8 @@ function InsightCard({ icon, title, value, change, increased }) {
   );
 }
 
+
+
 // Mock data for different time periods
 const allData = {
   weekly: {
