@@ -541,9 +541,6 @@ const BillingHistory = ({ onUpdateStats }) => {
             <>
               <p className="text-gray-500 font-medium text-lg mb-2">No {selectedTab} appointments found.</p>
               <p className="text-gray-400 max-w-md mx-auto">When you have {selectedTab} appointments, they will appear here.</p>
-              <button className="mt-6 px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 font-medium shadow-md">
-                Schedule New Appointment
-              </button>
             </>
           )}
         </div>
