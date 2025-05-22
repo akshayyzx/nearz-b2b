@@ -8,18 +8,32 @@ import {
   AlertCircle,
   XCircle,
   Clock,
-  BarChart3
+  BarChart3,
+  X
 } from "lucide-react";
 
-import CustomDateRangeComponent from "./CustomDateRangeComponent"; // Import the existing date picker
-import ServiceCategory from '../../utils/serviceCategories'
+import ServiceCategory from '../../utils/serviceCategories';
+import DropdownFilter from "./CustomDateRangeComponent";
 
 const AppointmentsDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
+  const [periodFilter, setPeriodFilter] = useState("all"); // Default filter is "all"
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const today = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
+
+  // Define period filter options
+  const periodOptions = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+    { value: "custom", label: "Custom Date Range" }
+  ];
 
   // Statistics state
   const [stats, setStats] = useState({
@@ -39,8 +53,7 @@ const AppointmentsDashboard = () => {
   
         if (data && Array.isArray(data)) {
           setAppointments(data);
-          setFilteredAppointments(data); // Initialize filtered to all appointments
-          calculateStats(data);
+          filterAppointmentsByPeriod(data, periodFilter);
         } else {
           console.error("Unexpected API response structure:", data);
           setError("Appointments data is not in the expected format.");
@@ -55,6 +68,107 @@ const AppointmentsDashboard = () => {
   
     loadAppointments();
   }, []);
+
+  // Apply filters when period changes
+  useEffect(() => {
+    if (periodFilter === "custom") {
+      setIsCustomDateOpen(true);
+    } else {
+      filterAppointmentsByPeriod(appointments, periodFilter);
+    }
+  }, [periodFilter]);
+
+  // Handle preset date range selections
+  const applyPresetDateRange = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    setEndDate(end.toISOString().split('T')[0]);
+    setStartDate(start.toISOString().split('T')[0]);
+  };
+
+  // Apply custom date filter
+  const applyCustomDateFilter = () => {
+    if (!startDate || !endDate) return;
+    
+    const filtered = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      const startFilterDate = new Date(startDate);
+      const endFilterDate = new Date(endDate);
+      
+      // Set end date to end of day for inclusive filtering
+      endFilterDate.setHours(23, 59, 59, 999);
+      
+      return appointmentDate >= startFilterDate && appointmentDate <= endFilterDate;
+    });
+    
+    setFilteredAppointments(filtered);
+    calculateStats(filtered);
+    setIsCustomDateOpen(false);
+  };
+
+  // Filter appointments based on selected time period
+  const filterAppointmentsByPeriod = (appointmentData, period) => {
+    if (!appointmentData.length) return;
+    
+    const now = new Date();
+    let filtered;
+    
+    switch (period) {
+      case "daily":
+        // Filter appointments from today
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate.setHours(0, 0, 0, 0) === now.setHours(0, 0, 0, 0);
+        });
+        break;
+        
+      case "weekly":
+        // Filter appointments from this week
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate >= startOfWeek && appointmentDate <= endOfWeek;
+        });
+        break;
+        
+      case "monthly":
+        // Filter appointments from this month
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return (
+            appointmentDate.getMonth() === now.getMonth() && 
+            appointmentDate.getFullYear() === now.getFullYear()
+          );
+        });
+        break;
+        
+      case "yearly":
+        // Filter appointments from this year
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate.getFullYear() === now.getFullYear();
+        });
+        break;
+        
+      case "all":
+      default:
+        // Show all appointments
+        filtered = appointmentData;
+        break;
+    }
+    
+    setFilteredAppointments(filtered);
+    calculateStats(filtered);
+  };
 
   // Calculate statistics based on provided appointment data
   const calculateStats = (appointmentData) => {
@@ -93,41 +207,6 @@ const AppointmentsDashboard = () => {
   
   // Get service categories from filtered appointments
   const serviceCategories = calculateServiceCategories(filteredAppointments);
-
-  // Handle date range changes from the CustomDateRangeComponent
-  const handleDateRangeChange = (startDate, endDate) => {
-    console.log("Date range changed:", startDate, endDate);
-    
-    // Save the current date range
-    setDateRange({ startDate, endDate });
-    
-    // If no date range is selected (reset), show all appointments
-    if (!startDate || !endDate) {
-      setFilteredAppointments(appointments);
-      calculateStats(appointments);
-      return;
-    }
-
-    // Filter appointments based on date range
-    const start = new Date(startDate);
-    start.setHours(0, 0, 0, 0); // Start from beginning of start date
-    
-    const end = new Date(endDate);
-    end.setHours(23, 59, 59, 999); // Include the entire end date
-
-    console.log("Filtering appointments between:", start, "and", end);
-    
-    const filtered = appointments.filter(appointment => {
-      if (!appointment.date) return false;
-      
-      const appointmentDate = new Date(appointment.date);
-      return appointmentDate >= start && appointmentDate <= end;
-    });
-
-    console.log("Filtered appointments:", filtered.length);
-    setFilteredAppointments(filtered);
-    calculateStats(filtered);
-  };
 
   const getStatusColor = (status) => {
     switch (status.toLowerCase()) {
@@ -173,25 +252,112 @@ const AppointmentsDashboard = () => {
     );
 
   return (
-    <div className=" mx-auto p-4 sm:p-6 w-[1350px]">
-      <div className="flex justify-between items-center mb-8 w-full w-[1350px]">
-        <h2 className="text-3xl font-bold text-[#F25435]">
+    <div className="mx-auto p-4 sm:p-6 w-[1350px]">
+      {/* Header with title and period filter */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 w-full">
+        <h2 className="text-5xl font-bold text-[#F25435] mt-12 mb-4 md:mb-0">
           Appointments Dashboard
         </h2>
-      </div>
-      
-      {/* Date Filter Component - Full Width */}
-      <div className="p-4 mb-8 border border-gray-100 bg-white rounded-lg shadow-sm">
-        <div className="flex items-center space-x-2 mb-2">
-          <Calendar size={16} className="text-gray-600" />
-          <span className="text-sm font-medium text-gray-700">Filter by date:</span>
+        
+        {/* Period Filter */}
+        <div className="mt-2 md:mt-12">
+          <DropdownFilter 
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            options={periodOptions}
+          />
         </div>
-        <CustomDateRangeComponent 
-          onDateRangeChange={handleDateRangeChange} 
-          initialStartDate={dateRange.startDate}
-          initialEndDate={dateRange.endDate}
-        />
       </div>
+
+      {/* Custom Date Range Popup */}
+      {isCustomDateOpen && (   
+        <div className="fixed inset-0 flex items-center justify-end z-50 mt-20">     
+          <div className="bg-white rounded-lg p-6 w-[22vw] shadow-xl mr-10">       
+            <div className="flex justify-between items-center mb-4">         
+              <h3 className="text-lg font-semibold text-gray-800">Select Date Range</h3>         
+              <button           
+                onClick={() => setIsCustomDateOpen(false)}           
+                className="text-gray-500 hover:text-gray-700"         
+              >           
+                <X className="h-5 w-5" />         
+              </button>       
+            </div>        
+            
+            {/* Start Date */}       
+            <div className="mb-4">         
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>         
+              <input           
+                type="date"           
+                value={startDate}           
+                max={endDate || today}           
+                onChange={(e) => setStartDate(e.target.value)}           
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+              />       
+            </div>        
+            
+            {/* End Date */}       
+            <div className="mb-6">         
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>         
+              <input           
+                type="date"           
+                value={endDate}           
+                min={startDate}           
+                max={today}           
+                onChange={(e) => setEndDate(e.target.value)}           
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+              />       
+            </div>        
+            
+            {/* Preset Range Buttons */}       
+            <div className="flex flex-wrap gap-3 mb-6">         
+              <button           
+                onClick={() => applyPresetDateRange(7)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 7 days         
+              </button>          
+              
+              <button           
+                onClick={() => applyPresetDateRange(30)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 30 days         
+              </button>          
+              
+              <button           
+                onClick={() => applyPresetDateRange(60)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 60 days         
+              </button>       
+            </div>        
+            
+            {/* Footer Actions */}       
+            <div className="flex justify-end gap-3">         
+              <button           
+                onClick={() => setIsCustomDateOpen(false)}           
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"         
+              >           
+                Cancel         
+              </button>         
+              <button           
+                onClick={applyCustomDateFilter}           
+                disabled={!startDate || !endDate}           
+                className={`px-4 py-2 rounded-md text-white ${             
+                  !startDate || !endDate               
+                    ? 'bg-indigo-300 cursor-not-allowed'               
+                    : 'bg-indigo-600 hover:bg-indigo-700'           
+                }`}         
+              >           
+                Apply         
+              </button>       
+            </div>     
+          </div>   
+        </div> 
+      )}
 
       {/* Dashboard Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
@@ -243,24 +409,6 @@ const AppointmentsDashboard = () => {
           <div className="text-sm text-gray-500">No Show</div>
         </div>
       </div>
-
-      {/* Filter Status Display */}
-      {dateRange.startDate && dateRange.endDate && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-          <div className="flex items-center text-blue-700">
-            <Calendar size={16} className="mr-2" />
-            <span className="text-sm font-medium">
-              Showing appointments from {new Date(dateRange.startDate).toLocaleDateString()} to {new Date(dateRange.endDate).toLocaleDateString()}
-            </span>
-            <button 
-              className="ml-auto text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded transition-colors"
-              onClick={() => handleDateRangeChange(null, null)}
-            >
-              Clear filter
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Visualization Section */}
       <div className="mb-8 grid grid-cols-1 lg:grid-cols-2 gap-6">

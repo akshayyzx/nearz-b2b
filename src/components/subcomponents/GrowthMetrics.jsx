@@ -4,12 +4,12 @@ import {
 } from 'recharts';
 import { 
   Search, Users, User, UserPlus, Clock, DollarSign, Activity, IndianRupee,
-  Calendar, CalendarDays, CalendarRange, ChevronDown, FilterIcon
+  Calendar, CalendarDays, CalendarRange, FilterIcon, X
 } from 'lucide-react';
 
 import TopCategories from '../../utils/topCategories.jsx';
 import ConversionFunnel from '../../utils/coversionFunnel.jsx';
-import CustomDateRangeComponent from './CustomDateRangeComponent.jsx';
+import DropdownFilter from "./CustomDateRangeComponent.jsx";
 
 // Component for customer insight card
 function InsightCard({ icon, title, value, change, increased }) {
@@ -32,8 +32,6 @@ function InsightCard({ icon, title, value, change, increased }) {
     </div>
   );
 }
-
-
 
 // Mock data for different time periods
 const allData = {
@@ -78,28 +76,28 @@ const allData = {
       pageViews: { value: 1450, change: 5.7, increased: true },
       newCustomers: { value: 45, change: 2.9, increased: true },
       averageBill: { value: 1250, change: 3.1, increased: true },
-      totalRevenue: { value: '₹ 89,648', change: 2.3, increased: true },
+      totalRevenue: { value: '₹ 629,000', change: 2.3, increased: true },
       totalAppointments: { value: '517', change: 1.2, increased: true }
     }
   },
-  quarterly: {
-    revenueData: [
-      { month: 'Q1', totalRevenue: 145000, cumulativeRevenue: 145000 },
-      { month: 'Q2', totalRevenue: 183000, cumulativeRevenue: 328000 },
-      { month: 'Q3', totalRevenue: 219000, cumulativeRevenue: 547000 },
-      { month: 'Q4', totalRevenue: 82000, cumulativeRevenue: 629000 },
-    ],
-    customerInsights: {
-      retentionRate: { value: 79, change: 3.5, increased: true },
-      churnRate: { value: 10, change: 2.8, increased: false },
-      avgAppointmentsPerDay: { value: 26, change: 4.2, increased: true },
-      pageViews: { value: 4350, change: 8.7, increased: true },
-      newCustomers: { value: 115, change: 4.9, increased: true },
-      averageBill: { value: 1350, change: 5.1, increased: true },
-      totalRevenue: { value: '₹ 629,000', change: 5.3, increased: true },
-      totalAppointments: { value: '1,824', change: 3.2, increased: true }
-    }
-  },
+  // quarterly: {
+  //   revenueData: [
+  //     { month: 'Q1', totalRevenue: 145000, cumulativeRevenue: 145000 },
+  //     { month: 'Q2', totalRevenue: 183000, cumulativeRevenue: 328000 },
+  //     { month: 'Q3', totalRevenue: 219000, cumulativeRevenue: 547000 },
+  //     { month: 'Q4', totalRevenue: 82000, cumulativeRevenue: 629000 },
+  //   ],
+  //   customerInsights: {
+  //     retentionRate: { value: 79, change: 3.5, increased: true },
+  //     churnRate: { value: 10, change: 2.8, increased: false },
+  //     avgAppointmentsPerDay: { value: 26, change: 4.2, increased: true },
+  //     pageViews: { value: 4350, change: 8.7, increased: true },
+  //     newCustomers: { value: 115, change: 4.9, increased: true },
+  //     averageBill: { value: 1350, change: 5.1, increased: true },
+  //     totalRevenue: { value: '₹ 629,000', change: 5.3, increased: true },
+  //     totalAppointments: { value: '1,824', change: 3.2, increased: true }
+  //   }
+  // },
   yearly: {
     revenueData: [
       { month: '2020', totalRevenue: 520000, cumulativeRevenue: 520000 },
@@ -135,44 +133,6 @@ const allData = {
   }
 };
 
-// Dropdown menu component
-function Dropdown({ options, selected, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        className="flex items-center justify-between w-40 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <span className="flex items-center">
-          {options.find(opt => opt.value === selected)?.icon}
-          <span className="ml-2">{options.find(opt => opt.value === selected)?.label}</span>
-        </span>
-        <ChevronDown size={16} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
-          {options.map((option) => (
-            <button
-              key={option.value}
-              className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-gray-100"
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-            >
-              {option.icon}
-              <span className="ml-2">{option.label}</span>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // Helper function to generate realistic mock data for custom date range
 function generateCustomData(startDate, endDate) {
   // Parse dates
@@ -194,7 +154,7 @@ function generateCustomData(startDate, endDate) {
       currentDate.setDate(start.getDate() + i);
       
       // Generate realistic daily revenue (between 8000 and 15000)
-      const dailyRevenue = Math.floor(800 + Math.random() * 700);
+      const dailyRevenue = Math.floor(8000 + Math.random() * 7000);
       cumulativeRevenue += dailyRevenue;
       
       revenueData.push({
@@ -289,44 +249,56 @@ function generateCustomData(startDate, endDate) {
 }
 
 export default function SalonDashboard() {
-  const [timeFilter, setTimeFilter] = useState('monthly');
   const [currentData, setCurrentData] = useState(allData.monthly);
   const [customDateApplied, setCustomDateApplied] = useState(false);
+  const [periodFilter, setPeriodFilter] = useState("monthly"); // Default filter is "monthly"
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const today = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
 
-  // Time filter options for dropdown
-  const timeFilterOptions = [
-    { value: 'weekly', label: 'Daily', icon: <Calendar size={16} /> },
-    { value: 'monthly', label: 'Monthly', icon: <CalendarDays size={16} /> },
-    { value: 'quarterly', label: 'Quarterly', icon: <CalendarRange size={16} /> },
-    { value: 'yearly', label: 'Yearly', icon: <CalendarRange size={16} /> },
-    { value: 'custom', label: 'Custom Date Range', icon: <FilterIcon size={16} /> },
+  // Define period filter options
+  const periodOptions = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+    { value: "custom", label: "Custom Date Range" }
   ];
 
-  // Update data when filter changes
+  // Apply filters when period changes
   useEffect(() => {
-    if (timeFilter !== 'custom') {
-      setCurrentData(allData[timeFilter]);
+    if (periodFilter === "custom") {
+      setIsCustomDateOpen(true);
+    } else {
+      // Use the selected period data
+      setCurrentData(allData[periodFilter]);
       setCustomDateApplied(false);
     }
-  }, [timeFilter]);
+  }, [periodFilter]);
 
-  // Handle custom date range change
-  const handleDateRangeChange = (startDate, endDate) => {
-    // If we have a valid date range
-    if (startDate && endDate) {
-      // Generate custom data based on the selected date range
-      const generatedData = generateCustomData(startDate, endDate);
-      
-      // Update the data state
-      allData.custom = generatedData;
-      setCurrentData(generatedData);
-      setCustomDateApplied(true);
-    }
+  // Handle preset date range selections
+  const applyPresetDateRange = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    setEndDate(end.toISOString().split('T')[0]);
+    setStartDate(start.toISOString().split('T')[0]);
   };
 
-  // Handle time filter change
-  const handleTimeFilterChange = (value) => {
-    setTimeFilter(value);
+  // Apply custom date filter
+  const applyCustomDateFilter = () => {
+    if (!startDate || !endDate) return;
+    
+    // Generate custom data based on the selected date range
+    const generatedData = generateCustomData(startDate, endDate);
+    
+    // Update the data state
+    allData.custom = generatedData;
+    setCurrentData(generatedData);
+    setCustomDateApplied(true);
+    setIsCustomDateOpen(false);
   };
 
   return (
@@ -334,24 +306,110 @@ export default function SalonDashboard() {
       {/* Main Content */}
       <div className="flex-1 p-8">
         {/* Top Bar */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
           <h1 className="text-5xl font-extrabold tracking-tight text-gray-800">
             Growth Dashboard
           </h1>
           
-          {/* Filter Controls */}
-          <div className="flex items-center space-x-4">
-            <Dropdown 
-              options={timeFilterOptions}
-              selected={timeFilter}
-              onChange={handleTimeFilterChange}
+          {/* Period Filter from AppointmentsDashboard */}
+          <div className="mt-2 md:mt-0">
+            <DropdownFilter 
+              value={periodFilter}
+              onChange={setPeriodFilter}
+              options={periodOptions}
             />
-            
-            {timeFilter === 'custom' && (
-              <CustomDateRangeComponent onDateRangeChange={handleDateRangeChange} />
-            )}
           </div>
         </div>
+
+        {/* Custom Date Range Popup */}
+        {isCustomDateOpen && (   
+          <div className="fixed inset-0 flex items-center justify-end z-50 mt-20">     
+            <div className="bg-white rounded-lg p-6 w-[22vw] shadow-xl mr-10">       
+              <div className="flex justify-between items-center mb-4">         
+                <h3 className="text-lg font-semibold text-gray-800">Select Date Range</h3>         
+                <button           
+                  onClick={() => setIsCustomDateOpen(false)}           
+                  className="text-gray-500 hover:text-gray-700"         
+                >           
+                  <X className="h-5 w-5" />         
+                </button>       
+              </div>        
+              
+              {/* Start Date */}       
+              <div className="mb-4">         
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>         
+                <input           
+                  type="date"           
+                  value={startDate}           
+                  max={endDate || today}           
+                  onChange={(e) => setStartDate(e.target.value)}           
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+                />       
+              </div>        
+              
+              {/* End Date */}       
+              <div className="mb-6">         
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>         
+                <input           
+                  type="date"           
+                  value={endDate}           
+                  min={startDate}           
+                  max={today}           
+                  onChange={(e) => setEndDate(e.target.value)}           
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+                />       
+              </div>        
+              
+              {/* Preset Range Buttons */}       
+              <div className="flex flex-wrap gap-3 mb-6">         
+                <button           
+                  onClick={() => applyPresetDateRange(7)}           
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+                >           
+                  <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                  Past 7 days         
+                </button>          
+                
+                <button           
+                  onClick={() => applyPresetDateRange(30)}           
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+                >           
+                  <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                  Past 30 days         
+                </button>          
+                
+                <button           
+                  onClick={() => applyPresetDateRange(60)}           
+                  className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+                >           
+                  <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                  Past 60 days         
+                </button>       
+              </div>        
+              
+              {/* Footer Actions */}       
+              <div className="flex justify-end gap-3">         
+                <button           
+                  onClick={() => setIsCustomDateOpen(false)}           
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"         
+                >           
+                  Cancel         
+                </button>         
+                <button           
+                  onClick={applyCustomDateFilter}           
+                  disabled={!startDate || !endDate}           
+                  className={`px-4 py-2 rounded-md text-white ${             
+                    !startDate || !endDate               
+                      ? 'bg-indigo-300 cursor-not-allowed'               
+                      : 'bg-indigo-600 hover:bg-indigo-700'           
+                  }`}         
+                >           
+                  Apply         
+                </button>       
+              </div>     
+            </div>   
+          </div> 
+        )}
 
         {/* Grid layout for all insight cards - 4 cards per row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -372,16 +430,16 @@ export default function SalonDashboard() {
           <InsightCard 
             icon={<Users size={20} />} 
             title="Customer Retention Rate" 
-            value={`${currentData.customerInsights.retentionRate.value}%`} 
-            change={`${currentData.customerInsights.retentionRate.change}pts` }
-            increased={currentData.customerInsights.retentionRate.increased} 
+            value={`${currentData.customerInsights.retentionRate.value}%`}
+            change={currentData.customerInsights.retentionRate.change}
+            increased={currentData.customerInsights.retentionRate.increased}
           />
-          <InsightCard 
-            icon={<UserPlus size={20} />} 
-            title="Churn Rate" 
-            value={`${currentData.customerInsights.churnRate.value}%`} 
-            change={`${currentData.customerInsights.churnRate.change}pts` }
-            increased={currentData.customerInsights.churnRate.increased} 
+          <InsightCard
+            icon={<UserPlus size={20} />}
+            title="Churn Rate"
+            value={`${currentData.customerInsights.churnRate.value}%`}
+            change={currentData.customerInsights.churnRate.change}
+            increased={currentData.customerInsights.churnRate.increased}
           />
           <InsightCard 
             icon={<Clock size={20} />} 
@@ -447,13 +505,13 @@ export default function SalonDashboard() {
           {/* Top Categories */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Top Categories</h2>
-            <TopCategories timeFilter={timeFilter} customDateApplied={customDateApplied} />
+            <TopCategories timeFilter={customDateApplied ? 'custom' : periodFilter} customDateApplied={customDateApplied} />
           </div>
 
           {/* Funnel Chart */}
           <div className="bg-white p-6 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold text-gray-800 mb-4">Conversion Funnel</h2>
-            <ConversionFunnel timeFilter={timeFilter} customDateApplied={customDateApplied} />
+            <ConversionFunnel timeFilter={customDateApplied ? 'custom' : periodFilter} customDateApplied={customDateApplied} />
           </div>
         </div>
       </div>

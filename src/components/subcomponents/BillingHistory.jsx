@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchAppointments, generateBill } from "./FetchAppointmentSlots";
-import CustomDateRangeComponent from "./CustomDateRangeComponent";
+import DropdownFilter from "./CustomDateRangeComponent";
 import { 
   Calendar, 
   Clock, 
@@ -13,7 +13,8 @@ import {
   XCircle,
   ClockIcon,
   Search,
-  Filter
+  Filter,
+  X
 } from "lucide-react";
 
 const BillingHistory = ({ onUpdateStats }) => {
@@ -24,7 +25,21 @@ const BillingHistory = ({ onUpdateStats }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [periodFilter, setPeriodFilter] = useState("all"); // Default filter is "all"
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const today = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
   const navigate = useNavigate();
+
+  // Define period filter options
+  const periodOptions = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+    { value: "custom", label: "Custom Date Range" }
+  ];
 
   // Fetch appointments
   useEffect(() => {
@@ -38,7 +53,7 @@ const BillingHistory = ({ onUpdateStats }) => {
           setAppointments(data);
           
           // Initial filtering based on selected tab
-          filterAppointmentsByTab(data, selectedTab);
+          filterAppointments(data, selectedTab, searchQuery);
   
           // Calculate and update stats
           const calculatedStats = {
@@ -68,56 +83,185 @@ const BillingHistory = ({ onUpdateStats }) => {
     loadAppointments();
   }, [onUpdateStats]);
 
-  // Filter appointments when tab changes
+  // Apply filters when tab or search query changes
   useEffect(() => {
-    filterAppointmentsByTab(appointments, selectedTab);
-  }, [selectedTab, appointments]);
+    filterAppointments(appointments, selectedTab, searchQuery);
+  }, [selectedTab, searchQuery, appointments]);
 
-  // Filter appointments when search query changes
+  // Apply period filter when it changes
   useEffect(() => {
-    const filtered = filterAppointmentsBySearch(filteredAppointments, searchQuery);
+    if (periodFilter === "custom") {
+      setIsCustomDateOpen(true);
+    } else {
+      filterAppointmentsByPeriod(appointments, periodFilter);
+    }
+  }, [periodFilter]);
+
+  // Handle preset date range selections
+  const applyPresetDateRange = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    setEndDate(end.toISOString().split('T')[0]);
+    setStartDate(start.toISOString().split('T')[0]);
+  };
+
+  // Apply custom date filter
+  const applyCustomDateFilter = () => {
+    if (!startDate || !endDate) return;
+    
+    const filtered = appointments.filter(appointment => {
+      const appointmentDate = new Date(appointment.date);
+      const startFilterDate = new Date(startDate);
+      const endFilterDate = new Date(endDate);
+      
+      // Set end date to end of day for inclusive filtering
+      endFilterDate.setHours(23, 59, 59, 999);
+      
+      return appointmentDate >= startFilterDate && appointmentDate <= endFilterDate;
+    });
+    
     setFilteredAppointments(filtered);
-  }, [searchQuery]);
+    setIsCustomDateOpen(false);
+  };
 
-  const filterAppointmentsByTab = (appts, tab) => {
+  // Filter appointments based on selected time period
+  const filterAppointmentsByPeriod = (appointmentData, period) => {
+    if (!appointmentData || !appointmentData.length) return;
+    
+    const now = new Date();
+    let filtered;
+    
+    // First filter by tab (upcoming or previous)
+    appointmentData = appointmentData.filter((appt) => 
+      selectedTab === "upcoming" ? isUpcoming(appt?.date) : !isUpcoming(appt?.date)
+    );
+
+    // Then apply search if present
+    if (searchQuery) {
+      const queryLower = searchQuery.toLowerCase();
+      appointmentData = appointmentData.filter((appt) => {
+        // Search by customer name
+        const customerName = appt.user?.username?.toLowerCase() || "";
+        if (customerName.includes(queryLower)) return true;
+        
+        // Search by service
+        const services = (appt.salon_services || [])
+          .map((s) => (s.custom_name || s.service_name || "").toLowerCase())
+          .join(" ");
+        if (services.includes(queryLower)) return true;
+        
+        // Search by status
+        const status = (appt.status || "").toLowerCase();
+        if (status.includes(queryLower)) return true;
+        
+        // Search by date
+        const date = formatDate(appt.date).toLowerCase();
+        if (date.includes(queryLower)) return true;
+        
+        return false;
+      });
+    }
+    
+    switch (period) {
+      case "daily":
+        // Filter appointments from today
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate.setHours(0, 0, 0, 0) === now.setHours(0, 0, 0, 0);
+        });
+        break;
+        
+      case "weekly":
+        // Filter appointments from this week
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay()); // Start of week (Sunday)
+        startOfWeek.setHours(0, 0, 0, 0);
+        
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
+        endOfWeek.setHours(23, 59, 59, 999);
+        
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate >= startOfWeek && appointmentDate <= endOfWeek;
+        });
+        break;
+        
+      case "monthly":
+        // Filter appointments from this month
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return (
+            appointmentDate.getMonth() === now.getMonth() && 
+            appointmentDate.getFullYear() === now.getFullYear()
+          );
+        });
+        break;
+        
+      case "yearly":
+        // Filter appointments from this year
+        filtered = appointmentData.filter(appointment => {
+          const appointmentDate = new Date(appointment.date);
+          return appointmentDate.getFullYear() === now.getFullYear();
+        });
+        break;
+        
+      case "all":
+      default:
+        // Show all appointments (with tab and search filters already applied)
+        filtered = appointmentData;
+        break;
+    }
+    
+    setFilteredAppointments(filtered);
+  };
+
+  // Centralized filtering function for tab and search
+  const filterAppointments = (appts, tab, query) => {
     if (!appts || !Array.isArray(appts) || appts.length === 0) {
       setFilteredAppointments([]);
       return;
     }
     
-    const filtered = appts.filter((appt) => 
+    // Filter by tab (upcoming or previous)
+    let filtered = appts.filter((appt) => 
       tab === "upcoming" ? isUpcoming(appt?.date) : !isUpcoming(appt?.date)
     );
     
-    setFilteredAppointments(filtered);
-  };
-
-  const filterAppointmentsBySearch = (appts, query) => {
-    if (!query) return appts;
-    
-    return appts.filter((appt) => {
+    // Apply search query if present
+    if (query) {
       const queryLower = query.toLowerCase();
-      
-      // Search by customer name
-      const customerName = appt.user?.username?.toLowerCase() || "";
-      if (customerName.includes(queryLower)) return true;
-      
-      // Search by service
-      const services = (appt.salon_services || [])
-        .map((s) => (s.custom_name || s.service_name || "").toLowerCase())
-        .join(" ");
-      if (services.includes(queryLower)) return true;
-      
-      // Search by status
-      const status = (appt.status || "").toLowerCase();
-      if (status.includes(queryLower)) return true;
-      
-      // Search by date
-      const date = formatDate(appt.date).toLowerCase();
-      if (date.includes(queryLower)) return true;
-      
-      return false;
-    });
+      filtered = filtered.filter((appt) => {
+        // Search by customer name
+        const customerName = appt.user?.username?.toLowerCase() || "";
+        if (customerName.includes(queryLower)) return true;
+        
+        // Search by service
+        const services = (appt.salon_services || [])
+          .map((s) => (s.custom_name || s.service_name || "").toLowerCase())
+          .join(" ");
+        if (services.includes(queryLower)) return true;
+        
+        // Search by status
+        const status = (appt.status || "").toLowerCase();
+        if (status.includes(queryLower)) return true;
+        
+        // Search by date
+        const date = formatDate(appt.date).toLowerCase();
+        if (date.includes(queryLower)) return true;
+        
+        return false;
+      });
+    }
+    
+    setFilteredAppointments(filtered);
+    
+    // Also apply the period filter if it's set
+    if (periodFilter !== "all" && periodFilter !== "custom") {
+      filterAppointmentsByPeriod(filtered, periodFilter);
+    }
   };
 
   const handleGenerateBill = async (appointmentId) => {
@@ -189,32 +333,6 @@ const BillingHistory = ({ onUpdateStats }) => {
     setSearchQuery(e.target.value);
   };
 
-  
-
-  const handleDateRangeChange = (startDate, endDate, customData) => {
-    if (!startDate || !endDate) {
-      // Reset to default filtered appointments by tab
-      filterAppointmentsByTab(appointments, selectedTab);
-      return;
-    }
-
-    // Filter appointments by date range
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    // Set hours to 0 for date comparison
-    start.setHours(0, 0, 0, 0);
-    end.setHours(23, 59, 59, 999);
-    
-    const filtered = appointments.filter(appt => {
-      const appointmentDate = new Date(appt.date);
-      appointmentDate.setHours(0, 0, 0, 0);
-      return appointmentDate >= start && appointmentDate <= end;
-    });
-    
-    setFilteredAppointments(filtered);
-  };
-
   const openInvoiceWindow = (ulid) => {
     navigate(`/bill/${ulid}`);
   };
@@ -252,27 +370,109 @@ const BillingHistory = ({ onUpdateStats }) => {
 
   return (
     <div>
-      {/* Header and Filter Section */}
-      <div className="flex justify-between items-center mb-6 w-[1350px] mt-10 -ml-20">
+      {/* Header with title and period filter */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 w-[1350px] mt-12 -ml-20">
         <h3 className="text-4xl font-bold text-gray-800 ml-20">Billing History</h3>
-        <div className="flex space-x-4">
-          {/* Date Filter */}
-          <div className="flex items-center">
-            <CustomDateRangeComponent onDateRangeChange={handleDateRangeChange} />
-          </div>
-          
-          <div className="flex space-x-2">
-            <button className="flex items-center text-xs mb-7 font-medium bg-indigo-50 hover:bg-gray-200 text-indigo-600 px-3 py-1.5 rounded-lg transition-colors duration-200">
-              <FileText size={14} className="mr-1" />
-              <span>Export</span>
-            </button>
-            {/* <button className="flex items-center text-xs font-medium bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors duration-200">
-              <Calendar size={14} className="mr-1" />
-              <span>Schedule</span>
-            </button> */}
-          </div>
+        
+        {/* Period Filter */}
+        <div className="mt-2 md:mt-0">
+          <DropdownFilter 
+            value={periodFilter}
+            onChange={setPeriodFilter}
+            options={periodOptions}
+          />
         </div>
       </div>
+
+      {/* Custom Date Range Popup */}
+      {isCustomDateOpen && (   
+        <div className="fixed inset-0 flex items-center justify-end z-50 mt-10">     
+          <div className="bg-white rounded-lg p-6 w-[22vw] shadow-xl mr-10">       
+            <div className="flex justify-between items-center mb-4">         
+              <h3 className="text-lg font-semibold text-gray-800">Select Date Range</h3>         
+              <button           
+                onClick={() => setIsCustomDateOpen(false)}           
+                className="text-gray-500 hover:text-gray-700"         
+              >           
+                <X className="h-5 w-5" />         
+              </button>       
+            </div>        
+            
+            {/* Start Date */}       
+            <div className="mb-4">         
+              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>         
+              <input           
+                type="date"           
+                value={startDate}           
+                max={endDate || today}           
+                onChange={(e) => setStartDate(e.target.value)}           
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+              />       
+            </div>        
+            
+            {/* End Date */}       
+            <div className="mb-6">         
+              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>         
+              <input           
+                type="date"           
+                value={endDate}           
+                min={startDate}           
+                max={today}           
+                onChange={(e) => setEndDate(e.target.value)}           
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"         
+              />       
+            </div>        
+            
+            {/* Preset Range Buttons */}       
+            <div className="flex flex-wrap gap-3 mb-6">         
+              <button           
+                onClick={() => applyPresetDateRange(7)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 7 days         
+              </button>          
+              
+              <button           
+                onClick={() => applyPresetDateRange(30)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 30 days         
+              </button>          
+              
+              <button           
+                onClick={() => applyPresetDateRange(60)}           
+                className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"         
+              >           
+                <Calendar className="h-4 w-4 mr-2 text-indigo-500" />           
+                Past 60 days         
+              </button>       
+            </div>        
+            
+            {/* Footer Actions */}       
+            <div className="flex justify-end gap-3">         
+              <button           
+                onClick={() => setIsCustomDateOpen(false)}           
+                className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"         
+              >           
+                Cancel         
+              </button>         
+              <button           
+                onClick={applyCustomDateFilter}           
+                disabled={!startDate || !endDate}           
+                className={`px-4 py-2 rounded-md text-white ${             
+                  !startDate || !endDate               
+                    ? 'bg-indigo-300 cursor-not-allowed'               
+                    : 'bg-indigo-600 hover:bg-indigo-700'           
+                }`}         
+              >           
+                Apply         
+              </button>       
+            </div>     
+          </div>   
+        </div> 
+      )}
       
       <div className="flex flex-col mb-6 space-y-4">
         <div className="flex rounded-xl bg-gray-100 p-1.5 shadow-inner">
@@ -308,7 +508,7 @@ const BillingHistory = ({ onUpdateStats }) => {
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder="Search by customer, service, or status..."
-            className="pl-10 pr-4 py-3 w-full bg-white  border-gray-200 rounded-lg shadow  focus:border-indigo-400 transition-all duration-200"
+            className="pl-10 pr-4 py-3 w-full bg-white border-gray-200 rounded-lg shadow focus:border-indigo-400 transition-all duration-200"
           />
           {searchQuery && (
             <button

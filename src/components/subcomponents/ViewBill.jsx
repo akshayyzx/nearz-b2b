@@ -103,15 +103,51 @@ const ViewBill = () => {
     user,
     salon_services,
     discount,
+    discount_type,
+    discount_value,
+    full_amount,
+    gst_details,
+    promo_code_discount
   } = invoice;
 
+  // Calculate subtotal from service amounts
   const subtotal = salon_services?.reduce(
     (sum, service) => sum + (service.amount || 0),
     0
   ) || 0;
 
-  // Calculate total after discount
-  const totalAfterDiscount = subtotal - (discount || 0);
+  // Calculate discount amount based on discount type
+  let discountAmount = 0;
+  let discountDisplay = '';
+  
+  if (discount) {
+    // If discount is already calculated and provided directly in the API response
+    discountAmount = discount;
+    discountDisplay = `₹${discountAmount.toFixed(2)}`;
+  } else if (discount_value) {
+    // Calculate based on discount_type and discount_value
+    if (discount_type === 'percentage') {
+      discountAmount = (subtotal * discount_value) / 100;
+      discountDisplay = `${discount_value}% (₹${discountAmount.toFixed(2)})`;
+    } else {
+      // Fixed amount discount
+      discountAmount = discount_value;
+      discountDisplay = `₹${discountAmount.toFixed(2)}`;
+    }
+  }
+
+  // Handle promo code discount if available
+  const promoDiscount = promo_code_discount || 0;
+
+  // Calculate total after discounts (before GST)
+  const totalAfterDiscount = subtotal - discountAmount - promoDiscount;
+  
+  // Calculate GST if gst_details is available
+  const gstRate = gst_details?.gst || 0;
+  const gstAmount = gst_details?.amount || 0;
+  
+  // Final total (after discount and including GST)
+  const finalTotal = full_amount || (totalAfterDiscount + gstAmount);
 
   return (
     <div className="min-h-screen bg-white p-4 text-black">
@@ -145,7 +181,7 @@ const ViewBill = () => {
           <thead>
             <tr>
               <th className="border border-gray-300 p-2 bg-gray-100 text-left">Item</th>
-              <th className="border border-gray-300 p-2 bg-gray-100 text-left">Price</th>
+              <th className="border border-gray-300 p-2 bg-gray-100 text-right">Price</th>
             </tr>
           </thead>
           <tbody>
@@ -157,8 +193,11 @@ const ViewBill = () => {
                     {service.custom_name && (
                       <div className="text-sm text-gray-500">{service.custom_name}</div>
                     )}
+                    {service.category_name && (
+                      <div className="text-xs text-gray-500">Category: {service.category_name}</div>
+                    )}
                   </td>
-                  <td className="border border-gray-300 p-2">₹{service.amount?.toFixed(2)}</td>
+                  <td className="border border-gray-300 p-2 text-right">₹{service.amount?.toFixed(2)}</td>
                 </tr>
               ))
             ) : (
@@ -171,9 +210,38 @@ const ViewBill = () => {
 
         <div className="flex flex-col items-end">
           <p className="mb-1"><strong>Subtotal:</strong> ₹{subtotal.toFixed(2)}</p>
-          <p className="mb-1"><strong>Discount:</strong> ₹{discount || 0}</p>
+          
+          {/* Display discount with improved formatting */}
+          {discountAmount > 0 && (
+            <p className="mb-1 text-green-700">
+              <strong>Discount:</strong> {discountDisplay}
+            </p>
+          )}
+          
+          {/* Display promo code discount if available */}
+          {promoDiscount > 0 && (
+            <p className="mb-1 text-green-700">
+              <strong>Promo Discount:</strong> ₹{promoDiscount.toFixed(2)}
+            </p>
+          )}
+          
+          {/* Display total after discounts but before GST */}
+          <p className="mb-1"><strong>Total after discounts:</strong> ₹{totalAfterDiscount.toFixed(2)}</p>
+          
+          {/* Display GST details if available */}
+          {gst_details && (
+            <>
+              <p className="mb-1">
+                <strong>GST ({gstRate}%):</strong> ₹{gstAmount.toFixed(2)}
+                {gst_details.gst_number && (
+                  <span className="text-xs text-gray-500 ml-2">GSTIN: {gst_details.gst_number}</span>
+                )}
+              </p>
+            </>
+          )}
+          
           <hr className="my-2 w-48" />
-          <p className="text-lg font-bold mb-4"><strong>GRAND TOTAL:</strong> ₹{totalAfterDiscount.toFixed(2)}</p>
+          <p className="text-lg font-bold mb-4"><strong>GRAND TOTAL:</strong> ₹{finalTotal.toFixed(2)}</p>
         </div>
 
         <div className="text-center text-gray-700 mt-8 italic">
@@ -186,4 +254,4 @@ const ViewBill = () => {
   );
 };
 
-export default ViewBill;  
+export default ViewBill;

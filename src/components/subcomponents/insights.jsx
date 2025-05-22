@@ -14,6 +14,7 @@ import {
 } from 'chart.js';
 import { Line, Bar, Pie, Doughnut } from 'react-chartjs-2';
 import { Calendar, TrendingUp, Users, CreditCard, Clock, Award, List, PieChart, X } from 'lucide-react';
+import DropdownFilter from './CustomDateRangeComponent'; // Import the extracted component
 
 // Register ChartJS components
 ChartJS.register(
@@ -36,6 +37,7 @@ const SalonDashboard = () => {
   const [endDate, setEndDate] = useState('');
   const [customDateActive, setCustomDateActive] = useState(false);
   const [customData, setCustomData] = useState(null);
+  const [dateRangeText, setDateRangeText] = useState('');
 
   useEffect(() => {
     if (customDateActive && startDate && endDate) {
@@ -60,6 +62,7 @@ const SalonDashboard = () => {
     setCustomData(null);
     setIsCustomDateOpen(false);
     setViewType('monthly');
+    setDateRangeText('');
   };
 
   // Apply custom date filter
@@ -69,6 +72,25 @@ const SalonDashboard = () => {
       setIsCustomDateOpen(false);
       // No need to generate data here as useEffect will handle it
     }
+  };
+
+  // Apply preset date range
+  const applyPresetDateRange = (days) => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - days);
+    
+    setStartDate(start.toISOString().split('T')[0]);
+    setEndDate(end.toISOString().split('T')[0]);
+    setCustomDateActive(true);
+    setDateRangeText(`Past ${days} days`);
+    
+    // Generate custom data
+    const newCustomData = generateCustomData(
+      start.toISOString().split('T')[0], 
+      end.toISOString().split('T')[0]
+    );
+    setCustomData(newCustomData);
   };
 
   // Generate synthetic data based on date range for demo purposes
@@ -596,18 +618,18 @@ const SalonDashboard = () => {
       setViewType(value);
       setCustomDateActive(false);
       setCustomData(null);
+      setDateRangeText('');
     }
   };
 
-  // Handle custom date selection
-  const handleCustomDateSelection = (start, end) => {
-    setStartDate(start);
-    setEndDate(end);
-    setCustomDateActive(true);
-    setIsCustomDateOpen(false);
-    
-    // No need to fetch data, as useEffect will generate custom data
-  };
+  // Filter options for dropdown
+  const filterOptions = [
+    { value: "daily", label: "Daily" },
+    { value: "weekly", label: "Weekly" },
+    { value: "monthly", label: "Monthly" },
+    { value: "yearly", label: "Yearly" },
+    { value: "custom", label: "Custom Date Range" }
+  ];
   
   return (
     <div className="bg-gray-50 min-h-screen p-6 w-full mt-6">
@@ -617,414 +639,319 @@ const SalonDashboard = () => {
           SALES DASHBOARD
         </h1>
         
-        {/* Time Period Filter */}
-        <div className="relative inline-block">
-            <select
-              value={customDateActive ? "custom" : viewType}
-              onChange={(e) => handleViewTypeChange(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-8 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm min-w-40"
-            >
-              {/* <option value="" disabled>ViewType</option> */}
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-              <option value="custom">Custom Date Range</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-              <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
-          </div>
-        </div>
+        {/* Time Period Filter - Using our new component */}
+        <DropdownFilter
+          value={customDateActive ? "custom" : viewType}
+          onChange={handleViewTypeChange}
+          options={filterOptions}
+        />
+      </div>
   
-        {/* Date Range Display (when custom date is active) */}
-        {customDateActive && (
-          <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6 inline-flex items-center">
-            <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
-            <span className="text-sm font-medium text-indigo-700">
-              {formatDateForDisplay(startDate)} - {formatDateForDisplay(endDate)}
-            </span>
-            <button 
-              onClick={resetCustomDate}
-              className="ml-2 text-indigo-600 hover:text-indigo-800"
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+      {/* Quick Date Range Filters */}
+      {/* <div className="flex flex-wrap gap-3 mb-6 ml-220">
+        <button
+          onClick={() => applyPresetDateRange(7)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 7 days
+        </button>
         
-        {/* Custom Date Range Picker Dialog */}
-        {isCustomDateOpen && (
- <div className="fixed inset-0 flex items-center justify-center z-50 bg-opacity-50 ">
-    <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-lg relative  border-2 border-indigo-600">
-      {/* Close button */}
-      <button
-        onClick={() => setIsCustomDateOpen(false)}
-        className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 focus:outline-none"
-        aria-label="Close"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-        </svg>
-      </button>
-      
-      <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Date Range</h3>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
-          <input
-            type="date"
-            max={endDate || today}
-            value={startDate || ''}
-            onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
-          <input
-            type="date"
-            min={startDate}
-            max={today}
-            value={endDate || ''}
-            onChange={(e) => setEndDate(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            onClick={() => setIsCustomDateOpen(false)}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition duration-150"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={applyCustomDateFilter}
-            disabled={!startDate || !endDate}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition duration-150 ${
-              !startDate || !endDate
-                ? 'bg-indigo-300 text-white cursor-not-allowed'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
-            }`}
-          >
-            Apply
-          </button>
-        </div>
+        <button 
+          onClick={() => applyPresetDateRange(30)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 30 days
+        </button>
+        
+        <button 
+          onClick={() => applyPresetDateRange(60)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 60 days
+        </button>
+      </div> */}
+  
+      {/* Date Range Display (when custom date is active)
+      {customDateActive && (
+        // <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 mb-6 inline-flex items-center cursor-pointer">
+        //   <Calendar className="h-5 w-5 text-indigo-500 mr-2" />
+        //   <span className="text-sm font-medium text-indigo-700">
+        //     {dateRangeText || `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`}
+        //   </span>
+        //   <button 
+        //     onClick={resetCustomDate}
+        //     className="ml-2 text-indigo-600 hover:text-indigo-800"
+        //   >
+        //     <X className="h-4 w-4" />
+        //   </button>
+        // </div>
+      )} */}
+      {/* Custom Date Range Picker Dialog */}
+ {isCustomDateOpen && (
+  <div className="fixed inset-0 flex items-center justify-end z-50 mt-10">
+    <div className="bg-white rounded-lg p-6 w-[22vw] shadow-xl mr-10">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-800">Select Date Range</h3>
+        <button
+          onClick={() => setIsCustomDateOpen(false)}
+          className="text-gray-500 hover:text-gray-700"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* Start Date */}
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+        <input
+          type="date"
+          value={startDate}
+          max={endDate || today}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+
+      {/* End Date */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+        <input
+          type="date"
+          value={endDate}
+          min={startDate}
+          max={today}
+          onChange={(e) => setEndDate(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </div>
+
+      {/* Preset Range Buttons */}
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button
+          onClick={() => applyPresetDateRange(7)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 7 days
+        </button>
+
+        <button
+          onClick={() => applyPresetDateRange(30)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 30 days
+        </button>
+
+        <button
+          onClick={() => applyPresetDateRange(60)}
+          className="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-indigo-200 transition-colors shadow-sm flex items-center"
+        >
+          <Calendar className="h-4 w-4 mr-2 text-indigo-500" />
+          Past 60 days
+        </button>
+      </div>
+
+      {/* Footer Actions */}
+      <div className="flex justify-end gap-3">
+        <button
+          onClick={() => setIsCustomDateOpen(false)}
+          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={applyCustomDateFilter}
+          disabled={!startDate || !endDate}
+          className={`px-4 py-2 rounded-md text-white ${
+            !startDate || !endDate
+              ? 'bg-indigo-300 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700'
+          }`}
+        >
+          Apply
+        </button>
       </div>
     </div>
   </div>
 )}
-  
+
+
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         {/* Total Revenue Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center mb-4">
-            <div className="bg-indigo-100 p-3 rounded-lg mr-4">
-              <CreditCard className="h-6 w-6 text-indigo-600" />
+            <div className="rounded-full bg-indigo-50 p-3 mr-4">
+              <TrendingUp className="h-6 w-6 text-indigo-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-              <h3 className="text-2xl font-bold text-gray-800">₹{formatNumber(totalRevenue)}</h3>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-700">Total Revenue</h2>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
-              {customDateActive 
-                ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-                : viewType === 'daily' ? 'Today' 
-                : viewType === 'weekly' ? 'This Week' 
-                : viewType === 'monthly' ? 'This Month' 
-                : 'This Year'}
-            </span>
-            <span className="flex items-center text-emerald-600 font-medium">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              +5.2%
-            </span>
+          <div className="flex items-baseline">
+            <span className="text-3xl font-bold text-gray-900">₹{formatNumber(totalRevenue)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            {customDateActive ? dateRangeText || `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}` : viewType}
           </div>
         </div>
-
+        
         {/* Total Appointments Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center mb-4">
-            <div className="bg-purple-100 p-3 rounded-lg mr-4">
-              <Calendar className="h-6 w-6 text-purple-600" />
+            <div className="rounded-full bg-emerald-50 p-3 mr-4">
+              <Users className="h-6 w-6 text-emerald-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Appointments</p>
-              <h3 className="text-2xl font-bold text-gray-800">{formatNumber(totalAppointments)}</h3>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-700">Total Appointments</h2>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
-              {customDateActive 
-                ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-                : viewType === 'daily' ? 'Today' 
-                : viewType === 'weekly' ? 'This Week' 
-                : viewType === 'monthly' ? 'This Month' 
-                : 'This Year'}
-            </span>
-            <span className="flex items-center text-emerald-600 font-medium">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              +3.8%
-            </span>
+          <div className="flex items-baseline">
+            <span className="text-3xl font-bold text-gray-900">{formatNumber(totalAppointments)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            {customDateActive ? dateRangeText || `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}` : viewType}
           </div>
         </div>
-
+        
         {/* Average Bill Value Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center mb-4">
-            <div className="bg-emerald-100 p-3 rounded-lg mr-4">
-              <Award className="h-6 w-6 text-emerald-600" />
+            <div className="rounded-full bg-amber-50 p-3 mr-4">
+              <CreditCard className="h-6 w-6 text-amber-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Avg. Bill Value</p>
-              <h3 className="text-2xl font-bold text-gray-800">₹{formatNumber(avgBillValue.toFixed(2))}</h3>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-700">Avg. Bill Value</h2>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
-              {customDateActive 
-                ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-                : viewType === 'daily' ? 'Today' 
-                : viewType === 'weekly' ? 'This Week' 
-                : viewType === 'monthly' ? 'This Month' 
-                : 'This Year'}
-            </span>
-            <span className="flex items-center text-emerald-600 font-medium">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              +2.4%
-            </span>
+          <div className="flex items-baseline">
+            <span className="text-3xl font-bold text-gray-900">₹{formatNumber(Math.round(avgBillValue))}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            {customDateActive ? dateRangeText || `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}` : viewType}
           </div>
         </div>
-
-        {/* Total Customers Card */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+        
+        {/* Total Bill Count Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center mb-4">
-            <div className="bg-orange-100 p-3 rounded-lg mr-4">
-              <Users className="h-6 w-6 text-orange-600" />
+            <div className="rounded-full bg-blue-50 p-3 mr-4">
+              <Award className="h-6 w-6 text-blue-500" />
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Bills</p>
-              <h3 className="text-2xl font-bold text-gray-800">{formatNumber(totalBillCount)}</h3>
-            </div>
+            <h2 className="text-lg font-semibold text-gray-700">Total Bills</h2>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
-              {customDateActive 
-                ? `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}`
-                : viewType === 'daily' ? 'Today' 
-                : viewType === 'weekly' ? 'This Week' 
-                : viewType === 'monthly' ? 'This Month' 
-                : 'This Year'}
-            </span>
-            <span className="flex items-center text-emerald-600 font-medium">
-              <TrendingUp className="h-4 w-4 mr-1" />
-              +4.1%
-            </span>
+          <div className="flex items-baseline">
+            <span className="text-3xl font-bold text-gray-900">{formatNumber(totalBillCount)}</span>
+          </div>
+          <div className="text-xs text-gray-500 mt-2">
+            {customDateActive ? dateRangeText || `${formatDateForDisplay(startDate)} - ${formatDateForDisplay(endDate)}` : viewType}
           </div>
         </div>
       </div>
-
-      {/* Main Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      
+      {/* Main Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Revenue Chart */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.revenueChart.title}
-          </h2>
-          <div className="h-80">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.revenueChart.title}</h2>
+          <div className="h-64">
             <Line 
-              data={createLineDataset(
-                currentViewData.revenueChart, 
-                currentViewData.revenueChart.title, 
-                colors.primary
-              )}
-              options={options}
+              data={createLineDataset(currentViewData.revenueChart, 'Revenue', colors.primary)} 
+              options={options} 
             />
           </div>
         </div>
-
+        
         {/* Appointments Chart */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.appointmentsChart.title}
-          </h2>
-          <div className="h-80">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.appointmentsChart.title}</h2>
+          <div className="h-64">
             <Line 
-              data={createLineDataset(
-                currentViewData.appointmentsChart, 
-                currentViewData.appointmentsChart.title, 
-                colors.secondary
-              )}
-              options={options}
+              data={createLineDataset(currentViewData.appointmentsChart, 'Appointments', colors.secondary)} 
+              options={options} 
             />
           </div>
         </div>
       </div>
-
-      {/* Secondary Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* Revenue by Service Category */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.serviceRevenueChart.title}
-          </h2>
-          <div className="h-80">
+      
+      {/* Service Analysis & Time Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Service Revenue Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.serviceRevenueChart.title}</h2>
+          <div className="h-64">
+            <Bar 
+              data={createBarDataset(currentViewData.serviceRevenueChart, 'Service Revenue', colors.primary)} 
+              options={options} 
+            />
+          </div>
+        </div>
+        
+        {/* Peak Hours Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.peakHoursChart.title}</h2>
+          <div className="h-64">
+            <Bar 
+              data={createBarDataset(currentViewData.peakHoursChart, 'Customer Count', colors.accent)} 
+              options={options} 
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Customer Analysis & Day Analysis */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Revenue by Day of Week */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.revenueDaysChart.title}</h2>
+          <div className="h-64">
+            <Pie
+              data={createBarDataset(currentViewData.revenueDaysChart, 'Revenue', colors.purple)} 
+              options={options} 
+            />
+          </div>
+        </div>
+        
+        {/* Revenue by Customer Type */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.customerTypeChart.title}</h2>
+          <div className="h-64 flex items-center justify-center">
             <Doughnut 
-              data={createPieDataset(
-                currentViewData.serviceRevenueChart, 
-                currentViewData.serviceRevenueChart.title
-              )}
+              data={createPieDataset(currentViewData.customerTypeChart, 'Revenue')} 
               options={{
                 ...options,
+                responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                  ...options.plugins,
-                  legend: {
-                    ...options.plugins.legend,
-                    position: 'bottom'
-                  }
-                }
-              }}
+                cutout: '60%'
+              }} 
             />
           </div>
         </div>
-
-        {/* Revenue by Day */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.revenueDaysChart.title}
-          </h2>
-          <div className="h-80">
-            <Bar 
-              data={createBarDataset(
-                currentViewData.revenueDaysChart, 
-                currentViewData.revenueDaysChart.title, 
-                colors.primary
-              )}
-              options={options}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Third Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* Peak Hours */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.peakHoursChart.title}
-          </h2>
-          <div className="h-80">
-            <Line 
-              data={createBarDataset(
-                currentViewData.peakHoursChart, 
-                currentViewData.peakHoursChart.title, 
-                colors.accent
-              )}
-              options={options}
-            />
-          </div>
-        </div>
-
-        {/* Customer Types */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.customerTypeChart.title}
-          </h2>
-          <div className="h-80 w-full">
-            <Doughnut 
-              data={createPieDataset(
-                currentViewData.customerTypeChart, 
-                currentViewData.customerTypeChart.title
-              )}
+        
+        {/* Revenue by Gender */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.genderChart.title}</h2>
+          <div className="h-64 flex items-center justify-center">
+            <Pie 
+              data={createPieDataset(currentViewData.genderChart, 'Revenue')} 
               options={{
                 ...options,
-                cutout: '60%',
-                plugins: {
-                  ...options.plugins,
-                  legend: {
-                    ...options.plugins.legend,
-                    position: 'bottom'
-                  }
-                }
-              }}
+                responsive: true,
+                maintainAspectRatio: false
+              }} 
             />
           </div>
         </div>
       </div>
-
-      {/* Fourth Dashboard Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        {/* Top Revenue Generating Services */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.topServicesChart.title}
-          </h2>
-          <div className="h-96">
-            <Bar 
-              data={createBarDataset(
-                currentViewData.topServicesChart, 
-                currentViewData.topServicesChart.title, 
-                colors.success
-              )}
-              options={horizontalBarOptions}
-            />
-          </div>
+      
+      {/* Top 10 Services Chart */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">{currentViewData.topServicesChart.title}</h2>
+        <div className="h-96">
+          <Bar 
+            data={createBarDataset(currentViewData.topServicesChart, 'Revenue', colors.primary)} 
+            options={horizontalBarOptions} 
+          />
         </div>
-
-        {/* Revenue by Gender */}
-        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">
-            {currentViewData.genderChart.title}
-          </h2>
-          <div className="flex">
-            <div className="h-95 w-full">
-              <Doughnut 
-                data={createPieDataset(
-                  currentViewData.genderChart, 
-                  currentViewData.genderChart.title
-                )}
-                options={{
-                  ...options,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    ...options.plugins,
-                    legend: {
-                      ...options.plugins.legend,
-                      position: 'bottom'
-                    },
-                    
-                  }
-                }}
-              />
-            </div>
-          </div>
-          {/* <div className="flex flex-col mt-4">
-            {currentViewData.genderChart.labels.map((label, index) => (
-              <div key={label} className="flex items-center justify-between p-2">
-                <div className="flex items-center">
-                  <div 
-                    className="w-3 h-3 rounded-full mr-2" 
-                    style={{ backgroundColor: colors.pieColors[index] }}
-                  />
-                  <span className="text-sm font-medium">{label}</span>
-                </div>
-                <div className="text-sm font-semibold">
-                ₹{formatNumber(currentViewData.genderChart.data[index])}
-                </div>
-              </div>
-            ))}
-          </div> */}
-        </div>
-      </div>
-
-      {/* Footer */}
-      <div className="mt-12 text-center text-gray-500 text-sm">
-        <p>© 2025 Salon Dashboard. All rights reserved.</p>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import moment from "moment";
 import salonApiService from "./FetchAppointmentSlots";
-import { fetchAppointments } from "./FetchAppointmentSlots";
+
 
 const SalonBookingApp = ({onClose,loadEvents}) => {
   // Main state variables
@@ -19,7 +19,7 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [userName, setUserName] = useState("");
-  const [discount,setDiscount]=useState("");
+  const [discountAmount, setDiscountAmount] = useState(""); // Changed from percentage to amount
   const [phoneNumber, setPhoneNumber] = useState("");
   
   // Search functionality
@@ -29,6 +29,11 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
   // Validation error states
   const [timeSlotError, setTimeSlotError] = useState("");
   const [userDetailsError, setUserDetailsError] = useState("");
+  const [discountError, setDiscountError] = useState(""); // Added discount error state
+  
+  // Booking success state
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
 
   // Initial data fetch - salon ID and services
   useEffect(() => {
@@ -221,6 +226,7 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
     // Clear previous errors
     setTimeSlotError("");
     setUserDetailsError("");
+    setDiscountError("");
     
     let isValid = true;
     
@@ -233,7 +239,47 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
       isValid = false;
     }
     
+    // Validate discount amount if entered
+    if (discountAmount) {
+      const subtotal = calculateTotalAmount().subtotal;
+      const discount = parseFloat(discountAmount);
+      
+      if (isNaN(discount)) {
+        setDiscountError("Please enter a valid discount amount");
+        isValid = false;
+      } else if (discount < 0) {
+        setDiscountError("Discount cannot be negative");
+        isValid = false;
+      } else if (discount > subtotal) {
+        setDiscountError("Discount cannot be greater than total amount");
+        isValid = false;
+      }
+    }
+    
     return isValid;
+  };
+
+  // Calculate the total amount
+  const calculateTotalAmount = () => {
+    const subtotal = pendingAppointments.reduce((total, appointment) => 
+      total + appointment.metadata.price, 0);
+    
+    // Calculate discount as direct amount instead of percentage
+    const discount = discountAmount ? parseFloat(discountAmount) : 0;
+    
+    return {
+      subtotal,
+      discountAmount: discount,
+      total: Math.max(0, subtotal - discount) // Ensure total is not negative
+    };
+  };
+
+  // Calculate discount percentage for API (since API expects percentage)
+  const calculateDiscountPercentage = () => {
+    const { subtotal, discountAmount } = calculateTotalAmount();
+    if (subtotal === 0 || discountAmount === 0) return 0;
+    
+    return (discountAmount / subtotal) * 100;
   };
 
   // Confirm all appointments
@@ -248,10 +294,11 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
     const userData = {
       username: userName.trim(),
       mobile: formattedPhone,
+      discount: calculateDiscountPercentage() // Convert absolute amount to percentage for API
     };
     
     try {
-      await salonApiService.makeAppointment(
+      const response = await salonApiService.makeAppointment(
         salonId,
         selectedSlot.start,
         totalDuration,
@@ -260,16 +307,21 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
         userData
       );
       
+      setBookingData(response);
+      setBookingSuccess(true);
       setPendingAppointments([]);
       
-      const alertResult = window.confirm("Appointments booked successfully!");
+      // Load new appointments in the background
+      loadEvents();
       
-      // This code runs after they click OK on the alert
-      // Refresh the calendar data
-      onClose(); // Close the sidebar
+      // Auto-close the booking success message after 5 seconds
+      setTimeout(() => {
+        setBookingSuccess(false);
+        onClose();
+      },0);
       
     } catch (error) {
-      alert(error.message);
+      setError(error.message);
     }
   };
   
@@ -303,6 +355,80 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
     setSelectedDate(moment(selectedDate).add(direction, 'month').format("YYYY-MM-DD"));
   };
 
+  // Format currency for display
+  const formatCurrency = (amount) => {
+    return `₹${amount.toFixed(2)}`;
+  };
+
+  // Handle discount input change
+  const handleDiscountChange = (e) => {
+    const value = e.target.value.replace(/[^\d.]/g, "");
+    setDiscountAmount(value);
+    if (discountError) setDiscountError("");
+  };
+
+  // Booking success overlay
+  const BookingSuccessOverlay = () => {
+    if (!bookingData) return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4 transform transition-all animate-fade-scale-in">
+          <div className="flex justify-center mb-4">
+            <div className="bg-green-100 rounded-full p-3">
+              <svg className="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+          </div>
+          
+          <h3 className="text-xl font-bold text-center text-gray-800 mb-4">Booking Confirmed!</h3>
+          <p className="text-center text-gray-600 mb-6">Your appointment has been successfully booked.</p>
+          
+          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+            <div className="mb-3">
+              <p className="text-sm text-gray-500">Appointment Details</p>
+              <p className="font-medium">{moment(bookingData.date).format("MMMM D, YYYY")}</p>
+              <p className="text-sm">{bookingData.start_time} - {bookingData.end_time}</p>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-3 mb-3">
+              <p className="text-sm text-gray-500">Booking ID</p>
+              <p className="font-medium text-sm">{bookingData.ulid}</p>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-3">
+              <div className="flex justify-between mb-1">
+                <span className="text-sm">Amount</span>
+                <span className="font-medium">₹{bookingData.full_amount}</span>
+              </div>
+              {bookingData.discount > 0 && (
+                <div className="flex justify-between mb-1">
+                  <span className="text-sm">Discount</span>
+                  <span className="font-medium text-green-600">-₹{bookingData.full_amount - bookingData.amount}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold border-t border-gray-200 pt-2 mt-2">
+                <span>Total</span>
+                <span>₹{bookingData.amount}</span>
+              </div>
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => {
+              setBookingSuccess(false);
+              onClose();
+            }}
+            className="w-full py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -331,6 +457,8 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
   
   return (
     <div className="bg-gray-100 min-h-screen">
+      {bookingSuccess && <BookingSuccessOverlay />}
+      
       <div className="container mx-auto py-6 px-4">
         <h1 className="text-2xl font-bold mb-6">Salon Appointment Booking</h1>
         <div className="bg-white p-4 rounded shadow mb-4">
@@ -362,13 +490,21 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
               />
             </div>
             <div>
-              <input
-                type="text"
-                placeholder="Discount"
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value.replace(/[^\d.]/g, ""))}
-                className="px-3 py-2 border rounded w-full"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                  <span className="text-gray-500">₹</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Discount Amount"
+                  value={discountAmount}
+                  onChange={handleDiscountChange}
+                  className={`px-3 py-2 pl-8 border rounded w-full ${discountError ? 'border-red-500' : ''}`}
+                />
+              </div>
+              {discountError && (
+                <p className="text-red-500 text-xs mt-1">{discountError}</p>
+              )}
             </div>
           </div>
           {userDetailsError && (
@@ -505,38 +641,7 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
                       Selected Services ({pendingAppointments.length}) – Total Duration: {totalDuration} min
                     </h3>
                     <button
-                      onClick={async () => {
-                        const isValid = await validateAndConfirm();
-                        if (!isValid) return;
-
-                        const formattedPhone = phoneNumber.startsWith("+91")
-                          ? phoneNumber
-                          : `+91${phoneNumber}`;
-
-                        const userData = {
-                          username: userName.trim(),
-                          mobile: formattedPhone,
-                        };
-
-                        try {
-                          await salonApiService.makeAppointment(
-                            salonId,
-                            selectedSlot.start,
-                            totalDuration,
-                            selectedSlot,
-                            pendingAppointments,
-                            userData
-                          );
-
-                          setPendingAppointments([]);
-                          alert("Appointments booked successfully!");
-
-                          await loadEvents(); // ✅ Load new appointments immediately
-                          onClose(); // ✅ Close the sidebar/modal
-                        } catch (error) {
-                          alert(error.message);
-                        }
-                      }}
+                      onClick={handleConfirmAllAppointments}
                       className="text-xs bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
                     >
                       Confirm All
@@ -566,9 +671,29 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
                       </li>
                     ))}
                   </ul>
+                  
+                  {/* Price Summary */}
+                  {pendingAppointments.length > 0 && (
+                    <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 mb-4">
+                      <h4 className="text-sm font-medium mb-2">Price Summary</h4>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(calculateTotalAmount().subtotal)}</span>
+                      </div>
+                      {discountAmount > 0 && (
+                        <div className="flex justify-between text-sm mb-1">
+                          <span>Discount</span>
+                          <span className="text-green-600">-{formatCurrency(calculateTotalAmount().discountAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold text-sm border-t border-gray-200 pt-1 mt-1">
+                        <span>Total</span>
+                        <span>{formatCurrency(calculateTotalAmount().total)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              
+              )}     
               {/* Search Bar for Services */}
               <div className="mb-4">
                 <div className="relative">
@@ -639,11 +764,8 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
                                     </div>
                                     <button
                                       onClick={() => handleAddService(service)}
-                                      className={`text-xs px-2 py-1 rounded
-                                        ${!selectedSlot 
-                                          ? 'bg-gray-300 cursor-not-allowed' 
-                                          : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                                      >
+                                      className="text-xs bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+                                    >
                                       Add
                                     </button>
                                   </div>
@@ -656,7 +778,9 @@ const SalonBookingApp = ({onClose,loadEvents}) => {
                     ))}
                   </div>
                 ) : (
-                  <p className="p-4 text-gray-500 text-sm">No services matching "{searchTerm}". Try a different search term.</p>
+                  <div className="p-4 text-center text-gray-500">
+                    No services found matching "{searchTerm}"
+                  </div>
                 )}
               </div>
             </div>

@@ -174,23 +174,24 @@ const loadEvents= useCallback(async () => {
     return (
       <div className="fresha-toolbar">
         <h1 className='font-bold text-2xl'>Appointments Calendar</h1>
-        <div className="fresha-toolbar-left ml-75">
-          <button 
-            className="today-btn" 
-            onClick={goToToday}
-          >
-            Today
-          </button>
-          <div className="nav-buttons">
-            <button onClick={goToPrev}>
-              <span>‹</span>
-            </button>
-            <span className="toolbar-label">{getFormattedLabel()}</span>
-            <button onClick={goToNext}>
-              <span>›</span>
-            </button>
-          </div>
-        </div>
+      <div className="fresha-toolbar-left ml-75">
+  <button 
+    className="today-btn" 
+    onClick={goToToday}
+  >
+    Today
+  </button>
+  <span className="date-new">{moment().format('MMM D, YYYY')}</span>
+  <div className="nav-buttons">
+    <button onClick={goToPrev}>
+      <span className='nav-controls'>‹</span>
+    </button>
+    <span className="toolbar-label">{getFormattedLabel()}</span>
+    <button onClick={goToNext}>
+      <span className='nav-controls'>›</span>
+    </button>
+  </div>
+</div>
         <div className="fresha-toolbar-center">
           {/* <div className="team-selector">
             <span>Scheduled team</span>
